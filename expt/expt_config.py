@@ -121,8 +121,13 @@ class Expt3(Config):
         'delta_max': 0.2,
     }
 
+    face_params = {
+        "mode": "knn",
+        "fraction": 0.2,
+    }
+
     kfold = 5
-    num_future = 100
+    num_future = 5
     cross_validate = False 
 
     perturb_std = 1.0

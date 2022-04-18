@@ -18,7 +18,8 @@ from libs.ar import lime_ar, svm_ar, clime_ar, limels_ar
 from libs.roar import lime_roar, clime_roar, limels_roar
 from libs.mace import mace
 from libs.wachter import wachter
-from libs.projection import lime_proj 
+from libs.projection import lime_proj
+from libs.face import face
 from rmpm import rmpm_ar, rmpm_proj, rmpm_roar
 
 
@@ -28,6 +29,7 @@ Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
 def to_numpy_array(lst):
     pad = len(max(lst, key=len))
     return np.array([i + [0]*(pad-len(i)) for i in lst])
+
 
 def load_models(dname, cname, n, wdir):
     pdir = os.path.dirname(wdir)
@@ -111,6 +113,7 @@ method_name_map = {
     'fr_rmpm_roar': "FR-MPM-ROAR",
     'fr_rmpm_roar_rho': "FR-MPM-ROAR (1)",
     'fr_rmpm_roar_delta': "FR-MPM-ROAR (2)",
+    'face': "FACE",
 }
 
 
@@ -147,6 +150,7 @@ method_map = {
     "quad_rmpm_roar": rmpm_roar,
     "bw_rmpm_roar": rmpm_roar,
     "fr_rmpm_roar": rmpm_roar,
+    "face": face,
 }
 
 

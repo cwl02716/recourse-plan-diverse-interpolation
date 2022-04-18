@@ -1,5 +1,4 @@
 import numpy as np
-from pyrsistent import immutable
 
 from sklearn.utils import check_random_state
 
@@ -139,7 +138,7 @@ def find_counterfactuals(candidates, data, immutable_constraint_matrix1, immutab
     list
     """
     candidate_counterfactuals_star = copy.deepcopy(candidates)
-    # STEP 1 -- BUILD NETWORK GRAPH
+# STEP 1 -- BUILD NETWORK GRAPH
     graph = build_graph(
         data, immutable_constraint_matrix1, immutable_constraint_matrix2, is_knn, n
     )
@@ -187,9 +186,9 @@ def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, 
     # ADD CONSTRAINTS by immutable inputs into adjacency matrix
     # if element in adjacency matrix 0, then it cannot be reached
     # this ensures that paths only take same sex / same race / ... etc. routes
-    for i in range(len(keys_immutables)):
+    for i in range(len(keys_immutable)):
         immutable_constraint_matrix1, immutable_constraint_matrix2 = build_constraints(
-            data, keys_immutables[i]
+            data, i, keys_immutable
         )
 
     # POSITIVE PREDICTIONS
@@ -261,10 +260,9 @@ def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, 
 
 def generate_recourse(x0, model, random_state, params=dict()):
     # Parameters
-    mode = params['mode']
-    fraction = params['fraction']
+    mode = params.face_params['mode']
+    fraction = params.face_params['fraction']
     train_data = params['train_data']
-    immutables = params['immutables']
 
     # Remove test instance from training instance and concat
     idx = np.all(x0 == train_data, axis=1)
@@ -272,6 +270,6 @@ def generate_recourse(x0, model, random_state, params=dict()):
     train_data = np.concatenate([x0, train_data])
 
     # Graph search
-    cf = graph_search(train_data, 0, immutables, model, mode, fraction)
+    cf = graph_search(train_data, 0, _immutables, model, mode, fraction)
 
     return cf
