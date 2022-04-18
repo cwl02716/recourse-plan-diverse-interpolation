@@ -119,8 +119,9 @@ def gen_synthetic_data(num_samples=1000, mean_0=None, cov_0=None, mean_1=None, c
 
 
 def gen_synthetic_data_nl(num_samples=1000, x_lim=(-2, 4), y_lim=(-2, 7),
-                          f=lambda x, y: y >= 1 + x + 2*x**2 + x**3 - x**4,
-                          random_state=42, add_noise=False):
+        f=lambda x, y: y >= 1 + x, random_state=42, add_noise=False):
+# : + 2*x**2 + x**3 - x**4,
+ #                          random_state=42, add_noise=False):
     random_state = check_random_state(random_state)
     std = 1.0
     x = random_state.uniform(x_lim[0], x_lim[1], num_samples)

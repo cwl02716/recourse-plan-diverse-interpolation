@@ -168,7 +168,7 @@ train_func_map = {
 
 synthetic_params = dict(num_samples=1000,
                         x_lim=(-2, 4), y_lim=(-2, 7),
-                        f=lambda x, y: y >= 1 + x + 2*x**2 + x**3 - x**4,
-                        random_state=42)
+                        f=lambda x, y: y >= 1 + x) #  + 2*x**2 + x**3 - x**4,
+                        # random_state=42)
 
 

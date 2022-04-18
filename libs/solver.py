@@ -16,13 +16,48 @@ class Solver(object):
         self.data_hat = self.data[self.labels == 1]
         self.N, self.dim = self.data_hat.shape
 
-    def compute_matrix(self, x_0):
-        A = np.zeros((self.dim, self.N))
-        d = np.zeros(self.N)
+    def quad(self, S, d, k):
+        """ Solve quadratic program with gurobi
+        """
+        dim = len(d)
 
-        for i in range(self.N):
-            A[:, i] = (self.data_hat[i] - x_0) / (np.linalg.norm(self.data_hat[i] - x_0))
-            d[i] = np.exp(-np.linalg.norm(self.data_hat[i] - x_0) ** 2 / self.h ** 2)
+        # Model initialization
+        model = grb.Model("qcp")
+        model.params.NonConvex = 2
+        model.setParam('OutputFlag', False)
+        model.params.threads = 64
+
+        # Variables
+        z = model.addMVar(dim, vtype=grb.GRB.BINARY, name="z")
+        z_sub = model.addMVar(1, vtype=grb.GRB.CONTINUOUS, name="zsub")
+
+        # Set objectives
+        obj = (1 - self.theta) * d @ z + self.theta * z_sub
+        model.setObjective(obj, grb.GRB.MINIMIZE)
+
+         # Constraints
+        model.addConstr(z.sum() == k)
+        model.addConstr(z_sub == z @ S @ z)
+
+        # Optimize
+        model.optimize()
+
+        z_opt = np.zeros(dim)
+
+        for i in range(dim):
+            z_opt[i] = z[i].x
+        
+        return z_opt
+
+    def compute_matrix(self, x_0, data):
+        N, dim = data.shape
+
+        A = np.zeros((dim, N))
+        d = np.zeros(N)
+
+        for i in range(N):
+            A[:, i] = (data[i] - x_0) / (np.linalg.norm(data[i] - x_0))
+            d[i] = np.linalg.norm(data[i] - x_0)
 
         S = np.dot(A.T, A)
 
@@ -35,9 +70,8 @@ class Solver(object):
 
         for i in range(len(w) - 1, -1, -1):
             cur_sum -= w[i] ** 2
-            if cur_sum / sum_eig < 0.1:
-                print(cur_sum / sum_eig)
-                return w[i:len(w)], v[i:len(w), :]
+            if cur_sum / sum_eig < 1e-9:
+                return np.flip(w[i:len(w)]), np.flip(v[:, i:len(w)], axis=1)
 
     def best_response(self, w, v, d, k, max_iter=100, period=80):
         z = np.zeros(self.N)
@@ -48,10 +82,10 @@ class Solver(object):
 
         for i in range(max_iter):
             for j in range(m_dim):
-                gamma[j] = -(self.theta ** 2 * w[j] * np.dot(v[j], z))
+                gamma[j] = -(self.theta * w[j] * np.dot(v[:, j], z))
 
-            gamma_identity = (1 - self.theta) * d - 2 * self.theta * np.dot(v.T, gamma)
-            idx = (-gamma_identity).argsort()[:k]
+            gamma_identity = (1 - self.theta) * d - 2 * np.dot(v, gamma)
+            idx = (gamma_identity).argsort()[:k]
             z = np.zeros(self.N)
             z[idx] = 1
 
@@ -72,11 +106,11 @@ class Solver(object):
 
             gamma_add = np.zeros(m_dim)
             for j in range(m_dim):
-                gamma_add[j] = kappa * ((-2 * gamma[j]) / (self.theta * w[j]) - 2 * self.theta * np.dot(v[j], z))
+                gamma_add[j] = kappa * ((-2 * gamma[j]) / (self.theta * w[j]) - 2 * np.dot(v[:, j], z))
 
             gamma += gamma_add
-            gamma_identity = (1 - self.theta) * d - 2 * self.theta * np.dot(v.T, gamma)
-            idx = (-gamma_identity).argsort()[:k]
+            gamma_identity = (1 - self.theta) * d - 2 * np.dot(v, gamma)
+            idx = (gamma_identity).argsort()[:k]
             z = np.zeros(self.N)
             z[idx] = 1
 

@@ -25,6 +25,7 @@ arrival_data = {
     'student': False,
 }
 
+
 def eval_performance(model, X_test, y_test):
     y_prob = model.predict_proba(X_test)
     y_pred = np.argmax(y_prob, axis=-1)
@@ -186,4 +187,3 @@ if __name__ == '__main__':
     filepath = f"{wdir}/report.txt"
     with open(filepath, mode='w') as file:
         yaml.dump(report, file)
-
