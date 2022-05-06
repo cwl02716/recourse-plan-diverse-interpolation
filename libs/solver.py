@@ -32,7 +32,7 @@ class Solver(object):
         z_sub = model.addMVar(1, vtype=grb.GRB.CONTINUOUS, name="zsub")
 
         # Set objectives
-        obj = (1 - self.theta) * d @ z + self.theta * z_sub
+        obj = (1 - self.theta) * d @ z - self.theta * z_sub
         model.setObjective(obj, grb.GRB.MINIMIZE)
 
          # Constraints
@@ -59,7 +59,7 @@ class Solver(object):
             A[:, i] = (data[i] - x_0) / (np.linalg.norm(data[i] - x_0))
             d[i] = np.linalg.norm(data[i] - x_0)
 
-        S = np.dot(A.T, A)
+        S = np.exp(-np.dot(A.T, A) ** 2 / (self.h ** 2))
 
         return A, S, d
 
@@ -82,7 +82,7 @@ class Solver(object):
 
         for i in range(max_iter):
             for j in range(m_dim):
-                gamma[j] = -(self.theta * w[j] * np.dot(v[:, j], z))
+                gamma[j] = (self.theta * w[j] * np.dot(v[:, j], z))
 
             gamma_identity = (1 - self.theta) * d - 2 * np.dot(v, gamma)
             idx = (gamma_identity).argsort()[:k]
@@ -118,3 +118,29 @@ class Solver(object):
                 z_p[i - max_iter + period, :] = z
 
         return z_p
+    
+    def solve(self, x0, k, period=20, best_response=True):
+        A, S, d = self.compute_matrix(x0, self.data[self.labels == 1])
+        w, v = self.find_eig(S)
+
+        # Best response and dp
+        if best_response:
+            z_p = s.best_response(w, v, d, k=2*k, period=period)
+        else:
+            z_p = s.dp(w, v, d, k=2*k, step_size=1, period=period)
+
+        z_prev = np.zeros(len(d))
+        for i in range(period):
+            z_prev = np.logical_or(z_prev, z_p[i, :])
+
+        idx_l = np.where(z_prev == 1)[0]
+
+        data = self.data[self.labels == 1][np.where(z_prev == 1)[0]]
+        A, S, d = self.compute_matrix(x0, data)
+        z = self.quad(S, d, k)
+
+        idx = idx_l[np.where(z == 1)[0]]
+        X_diverse = self.data[self.labels == 1]
+        X_other = X[y == 1][np.where(z_prev == 0)[0]]
+
+        return idx, X_diverse, X_other

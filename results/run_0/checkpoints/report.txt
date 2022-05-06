@@ -1,0 +1,13 @@
+mlp:
+  synthesis:
+    append_arrival: false
+    arrival_ratio: 0.2
+    cur_acc_mean: 0.986
+    cur_acc_std: 0.0020000000000000018
+    cur_auc_mean: 0.9994419076610856
+    cur_auc_std: 0.00017205301834417796
+    shift_acc_mean: 0.9410000000000001
+    shift_acc_std: 0.013190905958272894
+    shift_auc_mean: 0.9874936580416032
+    shift_auc_std: 0.004879336449284267
+    train_shift_size: 0.8
