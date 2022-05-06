@@ -19,10 +19,10 @@ X = transformer.transform(X)
 best_response = True
 # theta_l = [0.1 * i for i in range(11)]
 theta_l = [1]
-kernel_l = [0.1 * (i + 1) for i in range(101)]
+kernel_l = [0.1 * (i + 1) for i in range(21, 40)]
 for idx in range(len(theta_l)):
     for j in range(len(kernel_l)):
-        s = Solver(X, y, theta=0.5, kernel_width=kernel_l[j])
+        s = Solver(X, y, theta=1, kernel_width=kernel_l[j])
         A, S, d = s.compute_matrix(np.array([1.5, 2]), X[y == 1])
         w, v = s.find_eig(S)
 
