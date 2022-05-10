@@ -151,3 +151,48 @@ def find_pareto(x, y):
             best = e[1]
 
     return [e[0] for e in pareto], [e[1] for e in pareto]
+
+
+def compute_validity(model, plans):
+     out = model.predict(plans)
+     return 1 if np.all(out == 1) else 0
+
+
+def compute_proximity(test_ins, plans, p=2):
+    num_recourse, d = plans.shape
+    ret = 0
+    for i in range(num_recourse):
+        ret += lp_dist(plans[i], test_ins, p)
+    return ret / num_recourse
+
+
+def compute_diversity(cfs, dice_data, weights='inverse_mad', intercept_feature=True):
+    num_cfs, d = cfs.shape
+
+    if weights == 'inverse_mad':
+        feature_weights_dict = {}
+        normalized_mads = dice_data.get_valid_mads(normalized=True)
+        for feature in normalized_mads:
+            feature_weights_dict[feature] = round(
+                1/normalized_mads[feature], 2)
+
+        feature_weights = [1.0] if intercept_feature else []
+        for feature in dice_data.ohe_encoded_feature_names:
+            if feature in feature_weights_dict:
+                feature_weights.append(feature_weights_dict[feature])
+            else:
+                feature_weights.append(1.0)
+        feature_weights = np.array(feature_weights)
+
+    elif isinstance(weights, np.ndarray):
+        feature_weights = weights
+    else:
+        feature_weights = np.ones(d)
+
+    ret = 0
+    for i in range(num_cfs):
+        for j in range(i+1, num_cfs):
+            # ret += compute_dist(cfs[i], cfs[j], feature_weights)
+            ret += lp_dist(cfs[i], cfs[j], 2)
+
+    return ret / (num_cfs * (num_cfs-1) / 2)

@@ -9,8 +9,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state
 from collections import defaultdict, namedtuple
 
+import dice_ml
+
 from utils import helpers
-from utils.funcs import compute_max_distance, lp_dist
+from utils.data_transformer import DataTransformer
+from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity
 
 from classifiers import mlp, random_forest
 
@@ -20,10 +23,13 @@ from libs.mace import mace
 from libs.wachter import wachter
 from libs.projection import lime_proj
 from libs.face import face
+from libs.frpd import quad
+from libs.dice import dice
 from rmpm import rmpm_ar, rmpm_proj, rmpm_roar
 
 
-Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
+# Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
+Results = namedtuple("Results", ["valid", "l1_cost", "diversity", "feasible"])
 
 
 def to_numpy_array(lst):
@@ -89,6 +95,32 @@ def _run_single_instance(idx, method, x0, model, shifted_models, seed, logger, p
 
     return Results(l1_cost, cur_vald, fut_vald, report['feasible'])
 
+
+def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict()):
+    # logger.info("Generating recourse for instance : %d", idx)
+    torch.manual_seed(seed+2)
+    np.random.seed(seed+1)
+    random_state = check_random_state(seed)
+
+    df = params['dataframe']
+    numerical = params['numerical']
+    k = params['k']
+
+    full_dice_data = dice_ml.Data(dataframe=df,
+                              continuous_features=numerical,
+                              outcome_name='label')
+    transformer = DataTransformer(full_dice_data)
+
+    # x_ar, report = method.generate_recourse(x0, model, random_state, params)
+    plans, report = method.generate_recourse(x0, model, random_state, params)
+
+    valid = compute_validity(model, plans)
+    l1_cost = compute_proximity(x0, plans, p=1)
+    diversity = compute_diversity(plans, transformer.data_interface)
+    print(plans, valid, l1_cost, diversity)
+
+    return Results(valid, l1_cost, diversity, report['feasible'])
+
 method_name_map = {
     "lime_ar": "LIME-AR",
     "mpm_ar": "MPM-AR",
@@ -114,6 +146,8 @@ method_name_map = {
     'fr_rmpm_roar_rho': "FR-MPM-ROAR (1)",
     'fr_rmpm_roar_delta': "FR-MPM-ROAR (2)",
     'face': "FACE",
+    'frpd_quad': 'FRPD-QUAD',
+    'dice': 'DICE',
 }
 
 
@@ -125,7 +159,7 @@ dataset_name_map = {
     "student": "Student",
 }
 
-metric_order = {'cost': -1, 'cur-vald': 1, 'fut-vald': 1}
+metric_order = {'cost': -1, 'valid': 1, 'diversity': 0}
 
 
 method_map = {
@@ -151,6 +185,8 @@ method_map = {
     "bw_rmpm_roar": rmpm_roar,
     "fr_rmpm_roar": rmpm_roar,
     "face": face,
+    "frpd_quad": quad,
+    "dice": dice,
 }
 
 
@@ -170,7 +206,7 @@ train_func_map = {
 }
 
 
-synthetic_params = dict(num_samples=100,
+synthetic_params = dict(num_samples=1000,
                         x_lim=(-2, 4), y_lim=(-2, 7),
                         f=lambda x, y: y >= 1 + x + 2*x**2 + x**3 - x**4,
                         random_state=42)

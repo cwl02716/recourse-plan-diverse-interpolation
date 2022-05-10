@@ -126,13 +126,21 @@ class Expt3(Config):
         "fraction": 0.2,
     }
 
-    kfold = 5
-    num_future = 5
+    frpd_params = {
+        "theta": 0.99,
+        "kernel": 1.0,
+        "period": 20,
+        "response": True
+    }
+
+    kfold = 2
+    num_future = 2
+    k = 2
     cross_validate = False 
 
     perturb_std = 1.0
     num_samples = 1000
-    max_ins = 200
+    max_ins = 10
     sigma_neighbors = 0.001
 
     max_distance = 1.0

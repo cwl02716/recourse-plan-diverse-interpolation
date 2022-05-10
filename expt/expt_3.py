@@ -19,7 +19,7 @@ from utils.transformer import get_transformer
 from utils.funcs import compute_max_distance, lp_dist
 
 from expt.common import synthetic_params, clf_map, method_map
-from expt.common import _run_single_instance, to_mean_std
+from expt.common import _run_single_instance, _run_single_instance_plans, to_mean_std
 from expt.common import load_models, enrich_training_data
 from expt.common import method_name_map, dataset_name_map, metric_order
 from expt.expt_config import Expt3
@@ -29,7 +29,7 @@ def run(ec, wdir, dname, cname, mname,
         num_proc, seed, logger):
     print("Running dataset: %s, classifier: %s, method: %s..."
                % (dname, cname, mname))
-    df, _ = helpers.get_dataset(dname, params=synthetic_params)
+    df, numerical = helpers.get_dataset(dname, params=synthetic_params)
     y = df['label'].to_numpy()
     X_df = df.drop('label', axis=1)
     transformer = get_transformer(dname)
@@ -54,8 +54,8 @@ def run(ec, wdir, dname, cname, mname,
     kf = KFold(n_splits=ec.kfold)
 
     l1_cost = []
-    cur_vald = []
-    fut_vald = []
+    valid = []
+    diversity = []
     feasible = []
 
     for i, (train_index, cross_index) in enumerate(kf.split(X_train)):
@@ -71,20 +71,26 @@ def run(ec, wdir, dname, cname, mname,
         uds_X, uds_y = X_all[y_pred == 0], y_all[y_pred == 0]
         uds_X, uds_y = uds_X[:ec.max_ins], uds_y[:ec.max_ins]
         params = dict(train_data=X_training,
+                      labels=model.predict(X_training),
+                      dataframe=df,
+                      numerical=numerical,
                       enriched_data=enriched_data,
                       cat_indices=cat_indices,
                       config=new_config,
                       method_name=mname,
-                      dataset_name=dname)
+                      dataset_name=dname,
+                      k=ec.k,
+                      transformer=transformer)
 
         params['perturb_radius'] = ec.perturb_radius[dname]
+        params['frpd_params'] = ec.frpd_params
 
         jobs_args = []
 
         for idx, x0 in enumerate(uds_X):
-            jobs_args.append((idx, method, x0, model, shifted_models, seed, logger, params))
+            jobs_args.append((idx, method, x0, model, seed, logger, params))
 
-        rets = joblib.Parallel(n_jobs=min(num_proc, 8), prefer="threads")(joblib.delayed(_run_single_instance)(
+        rets = joblib.Parallel(n_jobs=min(num_proc, 8), prefer="threads")(joblib.delayed(_run_single_instance_plans)(
             *jobs_args[i]) for i in range(len(jobs_args)))
 
         # rets = []
@@ -93,19 +99,19 @@ def run(ec, wdir, dname, cname, mname,
             # rets.append(ret)
 
         l1_cost_ = []
-        cur_vald_ = []
-        fut_vald_ = []
+        valid_ = []
+        diversity_ = []
         feasible_ = []
 
         for ret in rets:
             l1_cost_.append(ret.l1_cost)
-            cur_vald_.append(ret.cur_vald)
-            fut_vald_.append(ret.fut_vald)
+            valid_.append(ret.valid)
+            diversity_.append(ret.diversity)
             feasible_.append(ret.feasible)
 
         l1_cost.append(l1_cost_)
-        cur_vald.append(cur_vald_)
-        fut_vald.append(fut_vald_)
+        valid.append(valid_)
+        diversity.append(diversity_)
         feasible.append(feasible_)
 
     def to_numpy_array(lst):
@@ -113,11 +119,11 @@ def run(ec, wdir, dname, cname, mname,
         return np.array([i + [0]*(pad-len(i)) for i in lst])
 
     l1_cost = to_numpy_array(l1_cost)
-    cur_vald = to_numpy_array(cur_vald)
-    fut_vald = to_numpy_array(fut_vald)
+    valid = to_numpy_array(valid)
+    diversity = to_numpy_array(diversity)
     feasible = to_numpy_array(feasible)
 
-    helpers.pdump((l1_cost, cur_vald, fut_vald, feasible),
+    helpers.pdump((l1_cost, valid, diversity, feasible),
                   f'{cname}_{dname}_{mname}.pickle', wdir)
 
     logger.info("Done dataset: %s, classifier: %s, method: %s!",
@@ -151,12 +157,12 @@ def plot_3(ec, wdir, cname, datasets, methods):
         f_feasible = (np.sum(joint_feasible, axis=1) > 0)
 
         for mname in methods:
-            l1_cost, cur_vald, fut_vald, feasible = helpers.pload(
+            l1_cost, valid, diversity, feasible = helpers.pload(
                 f'{cname}_{dname}_{mname}.pickle', wdir)
             avg = {}
             avg['cost'] = np.sum(l1_cost * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['cur-vald'] = np.sum(cur_vald * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['fut-vald'] = np.sum(fut_vald * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['valid'] = np.sum(valid * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['diversity'] = np.sum(diversity * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
             # avg['cost'] = np.mean(l1_cost, axis=1) 
             # avg['cur-vald'] = np.mean(cur_vald, axis=1) 
             # avg['fut-vald'] = np.mean(fut_vald, axis=1)

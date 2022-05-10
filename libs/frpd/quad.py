@@ -187,3 +187,20 @@ class Solver(object):
         recourse_set = recourse_set[self.quad(S, d, k, cost_diverse=False) == 1]
 
         return recourse_set, X_diverse, X_other
+
+
+def generate_recourse(x0, model, random_state, params=dict()):
+    data = params['train_data']
+    labels = params['labels']
+    k = params['k']
+
+    theta = params['frpd_params']['theta']
+    kernel_width = params['frpd_params']['kernel']
+    period = params['frpd_params']['period']
+    best_response = params['frpd_params']['response']
+
+    quad =  Solver(model, data, labels, theta, kernel_width)
+    plans = quad.generate_recourse(x0, k, period, best_response)[0]
+    report = dict(feasible=True)
+
+    return plans, report 

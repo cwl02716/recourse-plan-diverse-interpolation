@@ -1,0 +1,226 @@
+ec:
+  __dictpath__: ec
+  __doc__: null
+  e1:
+    __dictpath__: ec.e1
+    __doc__: null
+    all_clfs:
+    - net0
+    all_datasets:
+    - synthesis
+    all_methods:
+    - lime
+    - bw_rmpm
+    - fr_rmpm
+    - mpm
+    - quad_rmpm
+    - logdet_rmpm
+    kfold: 5
+    max_distance: 1.0
+    max_ins: 500
+    num_neighbors: 10
+    num_samples: 5000
+    perturb_radius: 0.05
+    perturb_sizes:
+    - 500
+    - 1000
+    - 2000
+    - 5000
+    - 10000
+    perturb_std: 1.0
+    r_fid: 0.1
+    rho_neg: 0.01
+    rho_pos: 0.01
+    rmpm_params:
+      bw_rmpm:
+        rho_neg: 1.0
+        rho_pos: 0.0
+      fr_rmpm:
+        rho_neg: 1.0
+        rho_pos: 0.0
+      logdet_rmpm:
+        rho_neg: 0.5
+        rho_pos: 0.7
+      mpm:
+        rho_neg: 0.5
+        rho_pos: 0.7
+      quad_rmpm:
+        rho_neg: 1.0
+        rho_pos: 0.0
+    sigma_neighbors: 0.001
+  e2:
+    __dictpath__: ec.e2
+    __doc__: null
+    all_clfs:
+    - net0
+    all_datasets:
+    - synthesis
+    all_methods:
+    - lime
+    - bw_rmpm
+    - fr_rmpm
+    - mpm
+    - quad_rmpm
+    - logdet_rmpm
+    delta: 10
+    kfold: 100
+    max_distance: 1.0
+    max_ins: 200
+    num_neighbors: 10
+    num_samples: 500
+    perturb_radius: 0.05
+    perturb_std: 1.0
+    r_fid: 0.1
+    rho_neg: 0.01
+    rho_pos: 0.01
+    rmpm_params:
+      bw_rmpm:
+        delta: 10.0
+        rho_neg: 0.1
+        rho_pos: 5.0
+      fr_rmpm:
+        delta: 10.0
+        rho_neg: 0.1
+        rho_pos: 5.0
+      logdet_rmpm:
+        delta: 10.0
+        rho_neg: 0.5
+        rho_pos: 0.7
+      mpm:
+        delta: 10.0
+        rho_neg: 0.5
+        rho_pos: 0.7
+      quad_rmpm:
+        delta: 10.0
+        rho_neg: 0.1
+        rho_pos: 5.0
+    sigma_neighbors: 0.001
+  e3:
+    __dictpath__: ec.e3
+    __doc__: null
+    all_clfs:
+    - net0
+    all_datasets:
+    - synthesis
+    all_methods:
+    - lime-ar
+    - svm-ar
+    cross_validate: false
+    face_params:
+      fraction: 0.2
+      mode: knn
+    frpd_params:
+      kernel: 1.0
+      period: 20
+      response: true
+      theta: 0.99
+    k: 2
+    kfold: 2
+    max_distance: 1.0
+    max_ins: 10
+    num_future: 2
+    num_samples: 1000
+    perturb_radius:
+      german: 0.2
+      sba: 0.1
+      student: 0.7
+      synthesis: 0.1
+    perturb_std: 1.0
+    rmpm_params:
+      rho_neg: 10.0
+      rho_pos: 0.0
+    roar_params:
+      delta_max: 0.2
+    sigma_neighbors: 0.001
+  e4:
+    __dictpath__: ec.e4
+    __doc__: null
+    all_clfs:
+    - net0
+    all_datasets:
+    - synthesis
+    all_methods:
+    - lime_roar
+    - fr_rmpm_ar
+    kfold: 5
+    max_distance: 1.0
+    max_ins: 200
+    num_future: 100
+    num_samples: 1000
+    params_to_vary:
+      delta_max:
+        default: 0.05
+        max: 0.2
+        min: 0.0
+        step: 0.02
+      none:
+        max: 0.0
+        min: 0.0
+        step: 0.1
+      perturb_radius:
+        default: 0.2
+        max: 0.4
+        min: 0.4
+        step: 0.2
+      rho_neg:
+        default: 1.0
+        max: 10.0
+        min: 0.0
+        step: 1.0
+    perturb_radius:
+      german: 0.2
+      sba: 0.1
+      student: 0.7
+      synthesis: 0.1
+    perturb_std: 1.0
+    rmpm_params:
+      rho_neg: 0.5
+      rho_pos: 0.0
+    roar_params:
+      delta_max: 0.2
+  e5:
+    __dictpath__: ec.e5
+    __doc__: null
+    all_clfs:
+    - net0
+    all_datasets:
+    - synthesis
+    all_methods:
+    - lime_roar
+    - fr_rmpm_ar
+    kfold: 5
+    max_distance: 1.0
+    max_ins: 200
+    num_future: 100
+    num_samples: 1000
+    params_to_vary:
+      delta_max:
+        default: 0.05
+        max: 0.2
+        min: 0.0
+        step: 0.02
+      none:
+        max: 0.0
+        min: 0.0
+        step: 0.1
+      perturb_radius:
+        default: 0.2
+        max: 0.4
+        min: 0.4
+        step: 0.2
+      rho_neg:
+        default: 1.0
+        max: 10.0
+        min: 0.0
+        step: 1.0
+    perturb_radius:
+      german: 0.2
+      sba: 0.1
+      student: 0.7
+      synthesis: 0.1
+    perturb_std: 1.0
+    rmpm_params:
+      rho_neg: 0.5
+      rho_pos: 0.0
+    roar_params:
+      delta_max: 0.2
