@@ -127,7 +127,7 @@ class Expt3(Config):
     }
 
     frpd_params = {
-        "theta": 0.99,
+        "theta": 0.5,
         "kernel": 1.0,
         "period": 20,
         "response": True
@@ -135,7 +135,7 @@ class Expt3(Config):
 
     kfold = 2
     num_future = 2
-    k = 2
+    k = 3
     cross_validate = False 
 
     perturb_std = 1.0

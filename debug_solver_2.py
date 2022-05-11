@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from libs.solver import Solver
+from libs.frpd.quad import Solver
 from utils import helpers
 from utils.transformer import get_transformer
 from expt.common import synthetic_params
@@ -26,8 +26,7 @@ y = model.predict(X)
 best_response = True
 # theta_l = [0.1 * i for i in range(11)]
 theta_l = [1]
-# kernel_l = [0.1 * (i + 1) for i in range(21, 40)]
-kernel_l = [0.5]
+kernel_l = [0.1 * (i + 1) for i in range(0, 40)]
 for idx in range(len(theta_l)):
     for j in range(len(kernel_l)):
         s = Solver(model, X, y, theta=1, kernel_width=kernel_l[j])

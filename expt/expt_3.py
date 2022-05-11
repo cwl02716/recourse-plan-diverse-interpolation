@@ -18,7 +18,7 @@ from utils import helpers
 from utils.transformer import get_transformer
 from utils.funcs import compute_max_distance, lp_dist
 
-from expt.common import synthetic_params, clf_map, method_map
+from expt.common import synthetic_params, synthetic_params_mean_cov, clf_map, method_map
 from expt.common import _run_single_instance, _run_single_instance_plans, to_mean_std
 from expt.common import load_models, enrich_training_data
 from expt.common import method_name_map, dataset_name_map, metric_order

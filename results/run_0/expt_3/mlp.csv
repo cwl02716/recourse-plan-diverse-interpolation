@@ -1,0 +1,3 @@
+dataset,method,cost,valid,diversity,feasible,joint_feasible,num_ins
+SBA,FRPD-QUAD,\textbf{2.72} $\pm$ 0.49,\textbf{1.00} $\pm$ 0.00,\textbf{1.54} $\pm$ 0.09,1.00,1.00,10
+,DICE,8.69 $\pm$ 1.35,0.90 $\pm$ 0.10,\textbf{0.86} $\pm$ 0.03,1.00,1.00,10

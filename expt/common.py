@@ -112,12 +112,14 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     transformer = DataTransformer(full_dice_data)
 
     # x_ar, report = method.generate_recourse(x0, model, random_state, params)
+    print("Original instance: ", x0)
     plans, report = method.generate_recourse(x0, model, random_state, params)
+    print("Recourse plans: ", plans)
 
     valid = compute_validity(model, plans)
     l1_cost = compute_proximity(x0, plans, p=1)
     diversity = compute_diversity(plans, transformer.data_interface)
-    print(plans, valid, l1_cost, diversity)
+    print(valid, l1_cost, diversity)
 
     return Results(valid, l1_cost, diversity, report['feasible'])
 
@@ -206,9 +208,10 @@ train_func_map = {
 }
 
 
-synthetic_params = dict(num_samples=1000,
+synthetic_params = dict(num_samples=100,
                         x_lim=(-2, 4), y_lim=(-2, 7),
                         f=lambda x, y: y >= 1 + x + 2*x**2 + x**3 - x**4,
                         random_state=42)
 
 
+synthetic_params_mean_cov = dict(num_samples=1000, mean_0=None, cov_0=None, mean_1=None, cov_1=None, random_state=42)

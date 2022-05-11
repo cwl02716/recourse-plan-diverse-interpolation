@@ -19,16 +19,19 @@ def generate_recourse(x0, model, random_state, params=dict()):
 
     df = df.drop(columns=['label'])
     keys = df.columns
-    d = {}
-    for i in range(len(x0)):
-        d[keys[i]] = [x0[i]]
+    # d = {}
+    # print(keys, x0)
+    # for i in range(len(x0)):
+    #     d[keys[i]] = [x0[i]]
+    # d = pd.DataFrame.from_dict(d)
     
-    plans = dice.generate_counterfactuals(pd.DataFrame.from_dict(d), total_CFs=k,
+    plans = dice.generate_counterfactuals(x0, total_CFs=k,
                                           desired_class="opposite",
                                           posthoc_sparsity_param=None,
-                                          proximity_weight=0.5,
-                                          diversity_weight=1.0) 
+                                          proximity_weight=0.0,
+                                          diversity_weight=4.0) 
     
     report = dict(feasible=True)
-    
-    return plans.final_cfs_df.drop(columns=['label']).to_numpy(), report
+    # print(plans.final_cfs_df_sparse)
+    return plans.final_cfs_df_sparse, report
+    # return plans.final_cfs_df.drop(columns=['label']).to_numpy(), report

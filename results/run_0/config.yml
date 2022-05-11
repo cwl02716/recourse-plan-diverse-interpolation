@@ -113,8 +113,8 @@ ec:
       kernel: 1.0
       period: 20
       response: true
-      theta: 0.99
-    k: 2
+      theta: 0.5
+    k: 3
     kfold: 2
     max_distance: 1.0
     max_ins: 10

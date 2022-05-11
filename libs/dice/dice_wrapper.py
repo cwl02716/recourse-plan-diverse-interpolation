@@ -23,10 +23,9 @@ class DicePyTorchWrapper(DicePyTorch):
         # Prepares user defined query_instance for DiCE.
         # query_instance = self.data_interface.prepare_query_instance(query_instance=query_instance, encoding='one-hot')
         # query_instance = query_instance.iloc[0].values
-        query_instance = self.data_interface.get_ohe_min_max_normalized_data(
-            query_instance).iloc[0].values
-        self.x1 = torch.tensor(query_instance)
-
+        # query_instance = self.data_interface.get_ohe_min_max_normalized_data(
+        #     query_instance).iloc[0].values
+        self.x1 = torch.tensor(query_instance, dtype=torch.float32)
         # find the predicted value of query_instance
         test_pred = self.predict_fn(torch.tensor(query_instance).float())[0]
         if desired_class == "opposite":
