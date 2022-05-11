@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score, \
     classification_report, confusion_matrix, roc_auc_score
 
 from utils.transformer import get_transformer
+from utils.transformer import DataTransformer
 from utils import helpers
 from classifiers import mlp
 from expt.common import clf_map, synthetic_params, train_func_map

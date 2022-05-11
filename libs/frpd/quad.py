@@ -148,10 +148,8 @@ class Solver(object):
         A, S, d = self.compute_matrix(x0, data)
         z = self.quad(S, d, k)
 
-        idx = idx_l[np.where(z == 1)[0]]
-        print(idx_l, z, np.where(z == 1), sum(z))
+        idx = idx_l[(-z).argsort()[:k]]
         X_diverse = self.data[self.labels == 1][idx]
-        print(len(self.data[self.labels == 1]), len(X_diverse))
         X_other = self.data[self.labels == 1][np.where(z_prev == 0)[0]]
 
         return idx, X_diverse, X_other
@@ -166,8 +164,6 @@ class Solver(object):
         for i in range(X_diverse.shape[0]):
             idx = knn.kneighbors(X_diverse[i].reshape(1, -1), return_distance=False)
             recourse_set_i = []
-            print("Label:")
-            print(self.model.predict(X_diverse[i]))
             
             for j in range(k):
                 best_x_b = None
@@ -182,8 +178,9 @@ class Solver(object):
                         if dist < best_dist:
                             best_x_b = x_b
                             best_dist = dist
-                
+                        
                 recourse_set_i.append(best_x_b)
+            
             recourse_set += recourse_set_i
         
         recourse_set = np.array(recourse_set)

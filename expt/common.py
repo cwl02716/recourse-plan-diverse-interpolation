@@ -13,7 +13,7 @@ import dice_ml
 
 from utils import helpers
 from utils.data_transformer import DataTransformer
-from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity
+from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp
 
 from classifiers import mlp, random_forest
 
@@ -29,7 +29,7 @@ from rmpm import rmpm_ar, rmpm_proj, rmpm_roar
 
 
 # Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
-Results = namedtuple("Results", ["valid", "l1_cost", "diversity", "feasible"])
+Results = namedtuple("Results", ["valid", "l1_cost", "diversity", "manifold_dist", "dpp", "feasible"])
 
 
 def to_numpy_array(lst):
@@ -37,10 +37,10 @@ def to_numpy_array(lst):
     return np.array([i + [0]*(pad-len(i)) for i in lst])
 
 
-def load_models(dname, cname, n, wdir):
+def load_models(dname, cname, wdir):
     pdir = os.path.dirname(wdir)
     pdir = os.path.join(pdir, 'checkpoints')
-    models = helpers.pload(f"{cname}_{dname}_{n}.pickle", pdir)
+    models = helpers.pload(f"{cname}_{dname}.pickle", pdir)
     return models
 
 
@@ -105,11 +105,12 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     df = params['dataframe']
     numerical = params['numerical']
     k = params['k']
+    transformer = params['transformer']
 
     full_dice_data = dice_ml.Data(dataframe=df,
                               continuous_features=numerical,
                               outcome_name='label')
-    transformer = DataTransformer(full_dice_data)
+    # transformer = DataTransformer(full_dice_data)
 
     # x_ar, report = method.generate_recourse(x0, model, random_state, params)
     print("Original instance: ", x0)
@@ -117,11 +118,12 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     print("Recourse plans: ", plans)
 
     valid = compute_validity(model, plans)
-    l1_cost = compute_proximity(x0, plans, p=1)
+    l1_cost = compute_proximity(x0, plans, p=2)
     diversity = compute_diversity(plans, transformer.data_interface)
-    print(valid, l1_cost, diversity)
+    manifold_dist = compute_distance_manifold(plans, params['train_data'], params['k'])
+    dpp = compute_dpp(plans)
 
-    return Results(valid, l1_cost, diversity, report['feasible'])
+    return Results(valid, l1_cost, diversity, manifold_dist, dpp, report['feasible'])
 
 method_name_map = {
     "lime_ar": "LIME-AR",
@@ -161,7 +163,7 @@ dataset_name_map = {
     "student": "Student",
 }
 
-metric_order = {'cost': -1, 'valid': 1, 'diversity': 0}
+metric_order = {'cost': -1, 'valid': 1, 'diversity': 0, 'manifold_dist': -1, 'dpp': -1}
 
 
 method_map = {
@@ -208,7 +210,7 @@ train_func_map = {
 }
 
 
-synthetic_params = dict(num_samples=100,
+synthetic_params = dict(num_samples=1000,
                         x_lim=(-2, 4), y_lim=(-2, 7),
                         f=lambda x, y: y >= 1 + x + 2*x**2 + x**3 - x**4,
                         random_state=42)

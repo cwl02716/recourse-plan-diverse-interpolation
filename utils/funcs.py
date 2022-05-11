@@ -1,6 +1,7 @@
 from scipy.linalg import sqrtm, eigh
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
+from sklearn.neighbors import NearestNeighbors
 
 import numpy as np
 import scipy as sp
@@ -196,3 +197,43 @@ def compute_diversity(cfs, dice_data, weights='inverse_mad', intercept_feature=T
             ret += lp_dist(cfs[i], cfs[j], 2)
 
     return ret / (num_cfs * (num_cfs-1) / 2)
+
+
+def compute_dpp(cfs, method='inverse_dist', dist=lp_dist):
+    """Computes the DPP of a matrix."""
+    num_cfs, d = cfs.shape
+    det_entries = np.ones((num_cfs, num_cfs))
+    if method == "inverse_dist":
+        for i in range(num_cfs):
+            for j in range(num_cfs):
+                det_entries[(i, j)] = 1.0 / \
+                    (1.0 + dist(cfs[i], cfs[j]))
+                if i == j:
+                    det_entries[(i, j)] += 0.0001
+
+    elif method == "exponential_dist":
+        for i in range(num_cfs):
+            for j in range(num_cfs):
+                det_entries[(i, j)] = 1.0 / \
+                    (np.exp(dist(cfs[i], cfs[j])))
+                if i == j:
+                    det_entries[(i, j)] += 0.0001
+
+    diversity_loss = np.linalg.det(det_entries)
+    return diversity_loss
+
+
+def compute_distance_manifold(plans, train_data_1, k):
+    knn = NearestNeighbors(n_neighbors=1)
+    knn.fit(train_data_1)
+
+    dist = np.zeros(k)
+    for i in range(k):
+        idx = knn.kneighbors(plans[i].reshape(1, -1), return_distance=False)
+        dist[i] = np.linalg.norm(plans[i] - train_data_1[idx])
+
+    return np.mean(dist)
+
+
+def compute_likelihood(plans, train_data_1, k):
+    pass

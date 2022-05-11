@@ -28,8 +28,8 @@ def generate_recourse(x0, model, random_state, params=dict()):
     plans = dice.generate_counterfactuals(x0, total_CFs=k,
                                           desired_class="opposite",
                                           posthoc_sparsity_param=None,
-                                          proximity_weight=0.0,
-                                          diversity_weight=4.0) 
+                                          proximity_weight=params['dice_params']['proximity_weight'],
+                                          diversity_weight=params['dice_params']['diversity_weight']) 
     
     report = dict(feasible=True)
     # print(plans.final_cfs_df_sparse)

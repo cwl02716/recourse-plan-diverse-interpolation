@@ -127,10 +127,15 @@ class Expt3(Config):
     }
 
     frpd_params = {
-        "theta": 0.5,
+        "theta": 0.99,
         "kernel": 1.0,
         "period": 20,
         "response": True
+    }
+
+    dice_params = {
+        "proximity_weight": 0.5,
+        "diversity_weight": 1.0,
     }
 
     kfold = 2
@@ -140,7 +145,7 @@ class Expt3(Config):
 
     perturb_std = 1.0
     num_samples = 1000
-    max_ins = 10
+    max_ins = 100
     sigma_neighbors = 0.001
 
     max_distance = 1.0
