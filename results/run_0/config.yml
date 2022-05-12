@@ -145,9 +145,18 @@ ec:
     all_methods:
     - lime_roar
     - fr_rmpm_ar
+    dice_params:
+      diversity_weight: 1.0
+      proximity_weight: 0.5
+    frpd_params:
+      kernel: 1.0
+      period: 20
+      response: true
+      theta: 0.99
+    k: 3
     kfold: 5
     max_distance: 1.0
-    max_ins: 200
+    max_ins: 10
     num_future: 100
     num_samples: 1000
     params_to_vary:
@@ -156,6 +165,11 @@ ec:
         max: 0.2
         min: 0.0
         step: 0.02
+      diversity_weight:
+        default: 1.0
+        max: 10.0
+        min: 0.0
+        step: 0.5
       none:
         max: 0.0
         min: 0.0
@@ -170,6 +184,11 @@ ec:
         max: 10.0
         min: 0.0
         step: 1.0
+      theta:
+        default: 0.5
+        max: 0.95
+        min: 0.15
+        step: 0.04
     perturb_radius:
       german: 0.2
       sba: 0.1
@@ -191,6 +210,7 @@ ec:
     all_methods:
     - lime_roar
     - fr_rmpm_ar
+    k: 3
     kfold: 5
     max_distance: 1.0
     max_ins: 200
@@ -202,6 +222,11 @@ ec:
         max: 0.2
         min: 0.0
         step: 0.02
+      diversity_weight:
+        default: 1.0
+        max: 5.0
+        min: 0.0
+        step: 0.5
       none:
         max: 0.0
         min: 0.0
@@ -216,6 +241,11 @@ ec:
         max: 10.0
         min: 0.0
         step: 1.0
+      theta:
+        default: 0.5
+        max: 1.0
+        min: 0.0
+        step: 0.1
     perturb_radius:
       german: 0.2
       sba: 0.1

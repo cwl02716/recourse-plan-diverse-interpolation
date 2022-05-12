@@ -24,7 +24,6 @@ def generate_recourse(x0, model, random_state, params=dict()):
     # for i in range(len(x0)):
     #     d[keys[i]] = [x0[i]]
     # d = pd.DataFrame.from_dict(d)
-    
     plans = dice.generate_counterfactuals(x0, total_CFs=k,
                                           desired_class="opposite",
                                           posthoc_sparsity_param=None,

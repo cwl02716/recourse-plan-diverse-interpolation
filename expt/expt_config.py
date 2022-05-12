@@ -130,7 +130,7 @@ class Expt3(Config):
         "theta": 0.99,
         "kernel": 1.0,
         "period": 20,
-        "response": True
+        "response": True,
     }
 
     dice_params = {
@@ -175,6 +175,18 @@ class Expt4(Config):
         'delta_max': 0.2,
     }
 
+    frpd_params = {
+        "theta": 0.99,
+        "kernel": 1.0,
+        "period": 20,
+        "response": True,
+    }
+
+    dice_params = {
+        "proximity_weight": 0.5,
+        "diversity_weight": 1.0,
+    }   
+
     params_to_vary = {
         'perturb_radius': {
             'default': 0.2,
@@ -198,16 +210,28 @@ class Expt4(Config):
             'min': 0.0,
             'max': 0.0,
             'step': 0.1
-        }
+        }, 
+        'theta': {
+            'default': 0.5,
+            'min': 0.15,
+            'max': 0.95,
+            'step': 0.04,
+        },
+        'diversity_weight': {
+            'default': 1.0,
+            'min': 0.0,
+            'max': 10.0,
+            'step': 0.5,
+        },
     }
 
-
+    k = 3
     kfold = 5
     num_future = 100
 
     perturb_std = 1.0
     num_samples = 1000
-    max_ins = 200
+    max_ins = 10
     max_distance = 1.0
 
 
@@ -257,12 +281,25 @@ class Expt5(Config):
             'min': 0.0,
             'max': 0.0,
             'step': 0.1
-        }
+        },
+        'theta': {
+            'default': 0.5,
+            'min': 0.0,
+            'max': 1.0,
+            'step': 0.1,
+        },
+        'diversity_weight': {
+            'default': 1.0,
+            'min': 0.0,
+            'max': 5.0,
+            'step': 0.5,
+        },
     }
 
 
     kfold = 5
     num_future = 100
+    k = 3
 
     perturb_std = 1.0
     num_samples = 1000
