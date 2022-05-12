@@ -145,7 +145,7 @@ class Expt3(Config):
 
     perturb_std = 1.0
     num_samples = 1000
-    max_ins = 2
+    max_ins = 100
     sigma_neighbors = 0.001
 
     max_distance = 1.0

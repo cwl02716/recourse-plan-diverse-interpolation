@@ -130,13 +130,13 @@ def run(ec, wdir, dname, cname, mname,
         pad = len(max(lst, key=len))
         return np.array([i + [0]*(pad-len(i)) for i in lst])
 
-    l1_cost = to_numpy_array([l1_cost])
-    valid = to_numpy_array([valid])
-    diversity = to_numpy_array([diversity])
-    dpp = to_numpy_array([dpp])
-    manifold_dist = to_numpy_array([manifold_dist])
-    likelihood = to_numpy_array([likelihood])
-    feasible = to_numpy_array([feasible])
+    l1_cost = np.array(l1_cost)
+    valid = np.array(valid)
+    diversity = np.array(diversity)
+    dpp = np.array(dpp)
+    manifold_dist = np.array(manifold_dist)
+    likelihood = np.array(likelihood)
+    feasible = np.array(feasible)
 
     helpers.pdump((l1_cost, valid, diversity, dpp, manifold_dist, likelihood, feasible),
                   f'{cname}_{dname}_{mname}.pickle', wdir)
@@ -169,25 +169,26 @@ def plot_3(ec, wdir, cname, datasets, methods):
         for metric, order in metric_order.items():
             temp[metric]['best'] = -np.inf
 
-        f_feasible = (np.sum(joint_feasible, axis=1) > 0)
+        # f_feasible = (np.sum(joint_feasible, axis=1) > 0)
 
         for mname in methods:
             l1_cost, valid, diversity, dpp, manifold_dist, likelihood, feasible = helpers.pload(
                 f'{cname}_{dname}_{mname}.pickle', wdir)
             avg = {}
-            avg['cost'] = np.sum(l1_cost * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['valid'] = np.sum(valid * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['diversity'] = np.sum(diversity * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['dpp'] = np.sum(dpp * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['manifold_dist'] = np.sum(manifold_dist * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['likelihood'] = np.sum(likelihood * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['cost'] = l1_cost # np.sum(l1_cost * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['valid'] = valid # np.sum(valid * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['diversity'] = diversity # np.sum(diversity * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['dpp'] = dpp # np.sum(dpp * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['manifold_dist'] = manifold_dist # np.sum(manifold_dist * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['likelihood'] = likelihood # np.sum(likelihood * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
 
             # avg['cost'] = np.mean(l1_cost, axis=1) 
             # avg['cur-vald'] = np.mean(cur_vald, axis=1) 
             # avg['fut-vald'] = np.mean(fut_vald, axis=1)
 
             for metric, order in metric_order.items():
-                m, s = np.mean(avg[metric][f_feasible]), np.std(avg[metric][f_feasible])
+                m, s = np.mean(avg[metric]), np.std(avg[metric])
+                # m, s = np.mean(avg[metric][f_feasible]), np.std(avg[metric][f_feasible])
                 temp[metric][mname] = (m, s)
                 temp[metric]['best'] = max(temp[metric]['best'], m * order)
 
@@ -202,8 +203,8 @@ def plot_3(ec, wdir, cname, datasets, methods):
                 res2[f"{metric}-{dname[:2]}"].append(to_mean_std(m, s, is_best))
 
             res[f'feasible'].append("{:.2f}".format(temp['feasible'][mname]))
-            res[f'joint_feasible'].append(np.mean(joint_feasible))
-            res[f'num_ins'].append(joint_feasible.shape[1])
+            # res[f'joint_feasible'].append(np.mean(joint_feasible))
+            # res[f'num_ins'].append(joint_feasible.shape[1])
 
     df = pd.DataFrame(res)
     print(df)
