@@ -113,9 +113,7 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     # transformer = DataTransformer(full_dice_data)
 
     # x_ar, report = method.generate_recourse(x0, model, random_state, params)
-    print("Original instance: ", x0)
     plans, report = method.generate_recourse(x0, model, random_state, params)
-    print("Recourse plans: ", plans)
 
     valid = compute_validity(model, plans)
     l1_cost = compute_proximity(x0, plans, p=2)

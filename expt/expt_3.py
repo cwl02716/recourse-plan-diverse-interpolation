@@ -169,7 +169,7 @@ def plot_3(ec, wdir, cname, datasets, methods):
         for metric, order in metric_order.items():
             temp[metric]['best'] = -np.inf
 
-        # f_feasible = (np.sum(joint_feasible, axis=1) > 0)
+        f_feasible = (np.sum(joint_feasible, axis=1) > 0)
 
         for mname in methods:
             l1_cost, valid, diversity, dpp, manifold_dist, likelihood, feasible = helpers.pload(
