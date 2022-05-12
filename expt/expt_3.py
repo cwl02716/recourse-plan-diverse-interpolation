@@ -64,8 +64,9 @@ def run(ec, wdir, dname, cname, mname,
     l1_cost = []
     valid = []
     diversity = []
-    manifold_dist = []
     dpp = []
+    manifold_dist = []
+    likelihood = []
     feasible = []
 
     # for i, (train_index, cross_index) in enumerate(kf.split(X_train)):
@@ -115,8 +116,9 @@ def run(ec, wdir, dname, cname, mname,
         l1_cost.append(ret.l1_cost)
         valid.append(ret.valid)
         diversity.append(ret.diversity)
-        manifold_dist.append(ret.manifold_dist)
         dpp.append(ret.dpp)
+        manifold_dist.append(ret.manifold_dist)
+        likelihood.append(ret.likelihood)
         feasible.append(ret.feasible)
 
         # l1_cost.append(l1_cost_)
@@ -131,11 +133,12 @@ def run(ec, wdir, dname, cname, mname,
     l1_cost = to_numpy_array([l1_cost])
     valid = to_numpy_array([valid])
     diversity = to_numpy_array([diversity])
-    manifold_dist = to_numpy_array([manifold_dist])
     dpp = to_numpy_array([dpp])
+    manifold_dist = to_numpy_array([manifold_dist])
+    likelihood = to_numpy_array([likelihood])
     feasible = to_numpy_array([feasible])
 
-    helpers.pdump((l1_cost, valid, diversity, manifold_dist, dpp, feasible),
+    helpers.pdump((l1_cost, valid, diversity, dpp, manifold_dist, likelihood, feasible),
                   f'{cname}_{dname}_{mname}.pickle', wdir)
 
     logger.info("Done dataset: %s, classifier: %s, method: %s!",
@@ -153,7 +156,7 @@ def plot_3(ec, wdir, cname, datasets, methods):
 
         joint_feasible = None
         for mname in methods:
-            _, _, _, _, _, feasible = helpers.pload(
+            _, _, _, _, _, _, feasible = helpers.pload(
                 f'{cname}_{dname}_{mname}.pickle', wdir)
             if joint_feasible is None:
                 joint_feasible = np.ones_like(feasible)
@@ -169,14 +172,15 @@ def plot_3(ec, wdir, cname, datasets, methods):
         f_feasible = (np.sum(joint_feasible, axis=1) > 0)
 
         for mname in methods:
-            l1_cost, valid, diversity, manifold_dist, dpp, feasible = helpers.pload(
+            l1_cost, valid, diversity, dpp, manifold_dist, likelihood, feasible = helpers.pload(
                 f'{cname}_{dname}_{mname}.pickle', wdir)
             avg = {}
             avg['cost'] = np.sum(l1_cost * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
             avg['valid'] = np.sum(valid * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
             avg['diversity'] = np.sum(diversity * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['manifold_dist'] = np.sum(manifold_dist * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
             avg['dpp'] = np.sum(dpp * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['manifold_dist'] = np.sum(manifold_dist * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
+            avg['likelihood'] = np.sum(likelihood * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
 
             # avg['cost'] = np.mean(l1_cost, axis=1) 
             # avg['cur-vald'] = np.mean(cur_vald, axis=1) 

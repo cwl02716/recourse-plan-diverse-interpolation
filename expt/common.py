@@ -13,7 +13,7 @@ import dice_ml
 
 from utils import helpers
 from utils.data_transformer import DataTransformer
-from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp
+from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp, compute_likelihood
 
 from classifiers import mlp, random_forest
 
@@ -29,7 +29,7 @@ from rmpm import rmpm_ar, rmpm_proj, rmpm_roar
 
 
 # Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
-Results = namedtuple("Results", ["valid", "l1_cost", "diversity", "manifold_dist", "dpp", "feasible"])
+Results = namedtuple("Results", ["valid", "l1_cost", "diversity", "dpp", "manifold_dist", "likelihood", "feasible"])
 
 
 def to_numpy_array(lst):
@@ -122,8 +122,9 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     diversity = compute_diversity(plans, transformer.data_interface)
     manifold_dist = compute_distance_manifold(plans, params['train_data'], params['k'])
     dpp = compute_dpp(plans)
+    likelihood = compute_likelihood(plans, params['train_data'], params['k'])
 
-    return Results(valid, l1_cost, diversity, manifold_dist, dpp, report['feasible'])
+    return Results(valid, l1_cost, diversity, dpp, manifold_dist, likelihood, report['feasible'])
 
 method_name_map = {
     "lime_ar": "LIME-AR",
@@ -163,8 +164,7 @@ dataset_name_map = {
     "student": "Student",
 }
 
-metric_order = {'cost': -1, 'valid': 1, 'diversity': 0, 'manifold_dist': -1, 'dpp': -1}
-
+metric_order = {'cost': -1, 'valid': 1, 'diversity': 0, 'dpp': -1, 'manifold_dist': -1, 'likelihood': 0}
 
 method_map = {
     "lime_ar": lime_ar,

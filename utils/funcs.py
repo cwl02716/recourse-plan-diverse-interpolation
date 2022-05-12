@@ -236,4 +236,13 @@ def compute_distance_manifold(plans, train_data_1, k):
 
 
 def compute_likelihood(plans, train_data_1, k):
-    pass
+    sigma = np.identity(plans.shape[1])
+
+    density = np.zeros(k)
+    for i in range(k):
+        s = 0
+        for j in range(train_data_1.shape[0]):
+            s += -np.dot(plans[i] - train_data_1[j], plans[i] - train_data_1[j])
+        density[i] = s
+
+    return np.mean(density)
