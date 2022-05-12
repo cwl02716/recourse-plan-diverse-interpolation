@@ -33,5 +33,5 @@ def generate_recourse(x0, model, random_state, params=dict()):
     
     report = dict(feasible=True)
     # print(plans.final_cfs_df_sparse)
-    return plans.final_cfs_df_sparse, report
+    return plans.cf_examples_list[0].final_cfs_df_sparse, report
     # return plans.final_cfs_df.drop(columns=['label']).to_numpy(), report
