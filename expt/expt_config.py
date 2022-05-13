@@ -258,6 +258,18 @@ class Expt5(Config):
         "student": 0.7,
     }
 
+    frpd_params = {
+    "theta": 0.99,
+    "kernel": 1.0,
+    "period": 20,
+    "response": True,
+    }
+
+    dice_params = {
+        "proximity_weight": 0.5,
+        "diversity_weight": 1.0,
+    }
+
     params_to_vary = {
         'perturb_radius': {
             'default': 0.2,
@@ -294,6 +306,12 @@ class Expt5(Config):
             'max': 5.0,
             'step': 0.5,
         },
+        'k': {
+            'default': 3,
+            'min': 2,
+            'max': 10,
+            'step': 1,
+        },
     }
 
 
@@ -303,7 +321,7 @@ class Expt5(Config):
 
     perturb_std = 1.0
     num_samples = 1000
-    max_ins = 200
+    max_ins = 2
     max_distance = 1.0
 
 

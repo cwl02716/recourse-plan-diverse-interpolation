@@ -16,16 +16,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold 
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import ParameterGrid
+
+import dice_ml
 
 from utils import helpers
 from utils.transformer import get_transformer
-from utils.funcs import compute_max_distance, lp_dist
-from utils.funcs import find_pareto
+from utils.data_transformer import DataTransformer
+from utils.funcs import compute_max_distance, lp_dist, find_pareto
 
 from expt.common import synthetic_params, clf_map, method_map, method_name_map
 from expt.common import dataset_name_map 
-from expt.common import _run_single_instance, to_numpy_array
+from expt.common import _run_single_instance, _run_single_instance_plans, to_numpy_array
 from expt.common import load_models, enrich_training_data
 from expt.expt_config import Expt5
 
@@ -33,94 +34,73 @@ from expt.expt_config import Expt5
 Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
 
 param_to_vary = {
-    "wachter": ["none"],
-    "fr_rmpm_ar": ["rho_neg"],
-    "bw_rmpm_ar": ["rho_neg"],
-    "quad_rmpm_ar": ["rho_neg"],
-    "fr_rmpm_proj": ["rho_neg"],
-    "bw_rmpm_proj": ["rho_neg"],
-    "quad_rmpm_proj": ["rho_neg"],
-    "lime_roar": ["delta_max"],
-    "clime_roar": ["delta_max"],
-    "limels_roar": ["delta_max"],
-    "mpm_roar": ["delta_max"],
-    'fr_rmpm_roar': ["delta_max"],
-    'bw_rmpm_roar': ["delta_max"],
-    'quad_rmpm_roar': ["delta_max"],
+    "k": "k",
 }
 
 
 def run(ec, wdir, dname, cname, mname,
         num_proc, seed, logger, start_index=None, num_ins=None):
-    # logger.info("Running dataset: %s, classifier: %s, method: %s...",
                 # dname, cname, mname)
     print("Running dataset: %s, classifier: %s, method: %s..." %
                 (dname, cname, mname))
 
-    df, _ = helpers.get_dataset(dname, params=synthetic_params)
+    df, numerical = helpers.get_dataset(dname, params=synthetic_params)
+    full_dice_data = dice_ml.Data(dataframe=df,
+                     continuous_features=numerical,
+                     outcome_name='label')
+    transformer = DataTransformer(full_dice_data)
+
     y = df['label'].to_numpy()
     X_df = df.drop('label', axis=1)
-    transformer = get_transformer(dname)
-    X = transformer.transform(X_df)
-    cat_indices = transformer.cat_indices
+    X = transformer.transform(X_df).to_numpy()
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8,
                                                         random_state=42, stratify=y)
-    enriched_data = enrich_training_data(5000, X_train, cat_indices, seed)
 
     d = X.shape[1]
     clf = clf_map[cname]
-    cur_models = load_models(dname, cname, ec.kfold, wdir)
+    model = load_models(dname, cname, wdir)
 
-    kf = KFold(n_splits=ec.kfold)
+    ptv = 'k'
+    method = method_map[mname]
 
-    
-    ptv_lst = param_to_vary[mname]
-    param_grid = {}
-    for ptv in ptv_lst:
-        min_ptv = ec.params_to_vary[ptv]['min']
-        max_ptv = ec.params_to_vary[ptv]['max']
-        step_size = ec.params_to_vary[ptv]['step']
-        values = np.arange(min_ptv, max_ptv+step_size, step_size)
-        param_grid[ptv] = values
-
-    grid = ParameterGrid(param_grid)
-    
-
-    mname_short = mname.replace('_delta', '').replace('_rho', '')
-    method = method_map[mname_short]
+    min_ptv = ec.params_to_vary[ptv]['min']
+    max_ptv = ec.params_to_vary[ptv]['max']
+    step_size = ec.params_to_vary[ptv]['step']
+    ptv_list = np.arange(min_ptv, max_ptv+step_size, step_size)
 
     res = dict()
-    res['params'] = grid 
-    res['delta_max_df'] = ec.roar_params['delta_max']
-    res['rho_neg_df'] = ec.rmpm_params['rho_neg']
+    res['ptv_name'] = ptv
+    res['k'] = []
+    res['validity'] = []
     res['cost'] = []
-    res['cur_vald'] = []
-    res['fut_vald'] = []
+    res['diversity'] = []
+    res['dpp'] = []
+    res['manifold_dist'] = []
+    res['likelihood'] = []
     res['feasible'] = []
 
-    for params in grid:
-        # logger.info("run with params {}".format(params))
-        print("run with params {}".format(params))
+    for value in ptv_list:
+        # logger.info("varying %s = %f", ptv, value)
+        print("varying %s = %f" % (ptv, value))
         # new_config = copy.deepcopy(ec)
         new_config = Expt5(ec.to_dict())
-        new_config.max_distance = compute_max_distance(X_train)
-        for ptv, value in params.items():
-            if ptv == 'rho_neg' or ptv == 'perturb_radius':
-                new_config.rmpm_params[ptv] = value
-            elif ptv == 'delta_max':
-                new_config.roar_params[ptv] = value
+        # if ptv == 'rho_neg':
+        #     new_config.rmpm_params[ptv] = value
+        # elif ptv == 'delta_max':
+        #     new_config.roar_params[ptv] = value
+        # new_config.max_distance = compute_max_distance(X_train)
 
-        train_index, _ = next(kf.split(X_train))
-        X_training, y_training = X_train[train_index], y_train[train_index]
+        # train_index, _ = next(kf.split(X_train))
+        # X_training, y_training = X_train[train_index], y_train[train_index]
 
-        model = cur_models[0]
-        shifted_models = load_models(dname + f'_shift_{0}', cname, ec.num_future, wdir)
+        # model = cur_models[0]
+        # shifted_models = load_models(dname + f'_shift_{0}', cname, ec.num_future, wdir)
 
-        X_all = np.vstack([X_test, X_training])
-        y_all = np.concatenate([y_test, y_training])
-        y_pred = model.predict(X_all)
-        uds_X, uds_y = X_all[y_pred == 0], y_all[y_pred == 0]
+        # X_all = np.vstack([X_test, X_training])
+        # y_all = np.concatenate([y_test, y_training])
+        y_pred = model.predict(X_test)
+        uds_X, uds_y = X_test[y_pred == 0], y_test[y_pred == 0]
 
         if start_index is not None or num_ins is not None:
             num_ins = num_ins or 1
@@ -130,41 +110,48 @@ def run(ec, wdir, dname, cname, mname,
         else:
             uds_X, uds_y = uds_X[:ec.max_ins], uds_y[:ec.max_ins]
 
-        params = dict(train_data=X_training,
-                      enriched_data=enriched_data,
-                      cat_indices=cat_indices,
+        params = dict(train_data=X_train,
+                      labels=model.predict(X_train),
+                      dataframe=df,
+                      numerical=numerical,
                       config=new_config,
-                      method_name=mname_short,
-                      dataset_name=dname)
+                      method_name=mname,
+                      dataset_name=dname,
+                      k=value,
+                      transformer=transformer,)
 
-        params['perturb_radius'] = ec.perturb_radius[dname]
-        # jobs_args = []
+        params['frpd_params'] = ec.frpd_params
+        params['dice_params'] = ec.dice_params
 
-        # for idx, x0 in enumerate(uds_X):
-            # jobs_args.append((idx, method, x0, model, shifted_models, seed, logger, params))
-
-        # rets = joblib.Parallel(n_jobs=1, prefer="threads")(joblib.delayed(_run_single_instance)(
-            # *jobs_args[i]) for i in range(len(jobs_args)))
         rets = []
         for idx, x0 in enumerate(uds_X):
-            ret = _run_single_instance(idx, method, x0, model, shifted_models, seed, logger, params)
+            ret = _run_single_instance_plans(idx, method, x0, model, seed, logger, params)
             rets.append(ret)
 
-
-        l1_cost = []
-        cur_vald = []
-        fut_vald = []
+        validity = []
+        cost = []
+        diversity = []
+        dpp = []
+        manifold_dist = []
+        likelihood = []
         feasible = []
 
         for ret in rets:
-            l1_cost.append(ret.l1_cost)
-            cur_vald.append(ret.cur_vald)
-            fut_vald.append(ret.fut_vald)
+            validity.append(ret.valid)
+            cost.append(ret.l1_cost)
+            diversity.append(ret.diversity)
+            dpp.append(ret.dpp)
+            manifold_dist.append(ret.manifold_dist)
+            likelihood.append(ret.likelihood)
             feasible.append(ret.feasible)
 
-        res['cost'].append(np.array(l1_cost))
-        res['cur_vald'].append(np.array(cur_vald))
-        res['fut_vald'].append(np.array(fut_vald))
+        res['k'].append(np.array(ptv_list))
+        res['validity'].append(np.array(validity))
+        res['cost'].append(np.array(cost))
+        res['diversity'].append(np.array(diversity))
+        res['dpp'].append(np.array(dpp))
+        res['manifold_dist'].append(np.array(manifold_dist))
+        res['likelihood'].append(np.array(likelihood))
         res['feasible'].append(np.array(feasible))
 
     helpers.pdump(res,
@@ -175,11 +162,14 @@ def run(ec, wdir, dname, cname, mname,
 
 
 label_map = {
-    'fut_vald': "Future Validity",
-    'cur_vald': "Current Validity",
+    'k': "K",
+    'validity': "Validity",
+    'diversity': "Diversity",
     'cost': 'Cost',
+    'dpp': 'DPP',
+    'Manifold_dist': "Manifold dist",
+    'likelihood': "Likelihood",
 }
-
 
 def plot_5(ec, wdir, cname, dname, methods):
     def plot(methods, x_label, y_label, data):
@@ -189,8 +179,8 @@ def plot_5(ec, wdir, cname, dname, methods):
         iter_marker = itertools.cycle(marker)
 
         for mname in methods:
-            x, y = find_pareto(data[mname][x_label], data[mname][y_label])
-            ax.plot(x, y, marker=next(iter_marker),
+            X, y = find_pareto(data[mname][x_label], data[mname][y_label])
+            ax.plot(X, y, marker=next(iter_marker),
                     label=method_name_map[mname], alpha=0.8)
 
         ax.set_ylabel(label_map[y_label])
@@ -201,26 +191,31 @@ def plot_5(ec, wdir, cname, dname, methods):
         plt.savefig(filepath, dpi=400, bbox_inches='tight')
 
     data = defaultdict(dict)
+    joint_feasible = None
+    for mname in methods:
+        res = helpers.pload(
+            f'{cname}_{dname}_{mname}.pickle', wdir)
+        for feasible in res['feasible']:
+            if joint_feasible is None:
+                joint_feasible = feasible
+            joint_feasible = np.logical_and(joint_feasible, feasible)
 
     for mname in methods:
         res = helpers.pload(
             f'{cname}_{dname}_{mname}.pickle', wdir)
 
         # print(res)
-        data[mname]['params'] = res['params']
-        data[mname]['rho_neg'] = res['rho_neg_df']
-        data[mname]['delta_max'] = res['delta_max_df']
+        data[dname][mname] = {}
+        data[mname]['ptv_name'] = res['ptv_name']
+        data[mname]['ptv_list'] = res['ptv_list']
         data[mname]['cost'] = []
-        data[mname]['fut_vald'] = []
-        data[mname]['cur_vald'] = []
+        data[mname]['diversity'] = []
 
-        for i in range(len(res['params'])):
+        for i in range(len(res['ptv_list'])):
             data[mname]['cost'].append(np.mean(res['cost'][i]))
-            data[mname]['fut_vald'].append(np.mean(res['fut_vald'][i]))
-            data[mname]['cur_vald'].append(np.mean(res['cur_vald'][i]))
+            data[mname]['diversity'].append(np.mean(res['diversity'][i]))
 
-    plot(methods, 'cost', 'fut_vald', data)
-    plot(methods, 'cost', 'cur_vald', data)
+    plot(methods, 'cost', 'diversity', data)
 
 
 def plot_5_1(ec, wdir, cname, datasets, methods):
@@ -233,50 +228,62 @@ def plot_5_1(ec, wdir, cname, datasets, methods):
                 ax.scatter(data[dname][mname][x_label], data[dname][mname][y_label],
                            marker=(5, 1), label=method_name_map[mname], alpha=0.7, color='black', zorder=10)
             else:
-                x, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
-                ax.plot(x, y, marker=next(iter_marker),
+                X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
+                ax.plot(X, y, marker=next(iter_marker),
                         label=method_name_map[mname], alpha=0.7)
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         ax.set_title(dataset_name_map[dname])
 
     data = defaultdict(dict)
     for dname in datasets:
+        joint_feasible = None
+        for mname in methods:
+            res = helpers.pload(
+                f'{cname}_{dname}_{mname}.pickle', wdir)
+            for feasible in res['feasible']:
+                if joint_feasible is None:
+                    joint_feasible = feasible
+                joint_feasible = np.logical_and(joint_feasible, feasible)
+
         for mname in methods:
             res = helpers.pload(
                 f'{cname}_{dname}_{mname}.pickle', wdir)
 
-            # print(res)
             data[dname][mname] = {}
-            data[dname][mname]['params'] = res['params']
-            data[dname][mname]['rho_neg'] = res['rho_neg_df']
-            data[dname][mname]['delta_max'] = res['delta_max_df']
+            data[dname][mname]['ptv_name'] = res['ptv_name']
+            data[dname][mname]['k'] = res['k']
+            data[dname][mname]['validity'] = []
             data[dname][mname]['cost'] = []
-            data[dname][mname]['fut_vald'] = []
-            data[dname][mname]['cur_vald'] = []
+            data[dname][mname]['diversity'] = []
+            data[dname][mname]['dpp'] = []
+            data[dname][mname]['manifold_dist'] = []
+            data[dname][mname]['likelihood'] = []
 
-            for i in range(len(res['params'])):
+            for i in range(len(res['ptv_list'])):
+                data[dname][mname]['validity'].append(np.mean(res['validity'][i]))
                 data[dname][mname]['cost'].append(np.mean(res['cost'][i]))
-                data[dname][mname]['fut_vald'].append(np.mean(res['fut_vald'][i]))
-                data[dname][mname]['cur_vald'].append(np.mean(res['cur_vald'][i]))
-
+                data[dname][mname]['diversity'].append(np.mean(res['diversity'][i]))
+                data[dname][mname]['dpp'].append(np.mean(res['dpp'][i]))
+                data[dname][mname]['manifold_dist'].append(np.mean(res['manifold_dist'][i]))
+                data[dname][mname]['likelihood'].append(np.mean(res['likelihood'][i]))
 
     plt.style.use('seaborn-deep')
     plt.rcParams.update({'font.size': 10.5})
     num_ds = len(datasets)
-    figsize_map = {5: (17, 5.5), 4: (12, 5.5), 3: (10, 5.5), 2: (8, 5.5), 1: (4, 4)}
-    fig, axs = plt.subplots(2, num_ds, figsize=figsize_map[num_ds])
+    figsize_map = {4: (20, 5.5), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
+    fig, axs = plt.subplots(num_ds, 6, figsize=figsize_map[num_ds])
     if num_ds == 1:
         axs = axs.reshape(-1, 1)
 
-    metrics = ['cur_vald', 'fut_vald']
+    metrics = ['validity', 'cost, ''diversity', 'dpp', 'manifold_dist', 'likelihood']
 
     for i in range(num_ds):
         for j in range(len(metrics)):
-            __plot(axs[j, i], data, datasets[i], 'cost', metrics[j])
-            if i == 0:
-                axs[j, i].set_ylabel(label_map[metrics[j]])
-            if j == len(metrics) - 1:
-                axs[j, i].set_xlabel(label_map['cost'])
+            __plot(axs[i, j], data, datasets[i], 'k', metrics[j])
+            if j == 0:
+                axs[i, j].set_ylabel(label_map[datasets[i]])
+            if i == len(datasets) - 1:
+                axs[i, j].set_xlabel(label_map['k'])
 
     marker = reversed(['+', 'v', '^', 'o', (5, 0)])
     iter_marker = itertools.cycle(marker)
@@ -311,13 +318,14 @@ def run_expt_5(ec, wdir, datasets, classifiers, methods,
     if methods is None or len(methods) == 0:
         methods = ec.e5.all_methods
 
+
     if not plot_only:
         jobs_args = []
 
         for cname in classifiers:
             cmethods = copy.deepcopy(methods)
             if cname == 'rf' and 'wachter' in cmethods:
-                cmethods.remove('wachter')            
+                cmethods.remove('wachter')
 
             for dname in datasets:
                 for mname in cmethods:
@@ -333,8 +341,8 @@ def run_expt_5(ec, wdir, datasets, classifiers, methods,
         cmethods = copy.deepcopy(methods)
         if cname == 'rf' and 'wachter' in cmethods:
             cmethods.remove('wachter')            
-        for dname in datasets:
-            plot_5(ec.e5, wdir, cname, dname, cmethods)
+        # for dname in datasets:
+        #     plot_5(ec.e4, wdir, cname, dname, cmethods)
         plot_5_1(ec.e5, wdir, cname, datasets, cmethods)
 
     logger.info("Done ept 5.")

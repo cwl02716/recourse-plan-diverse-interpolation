@@ -210,10 +210,18 @@ ec:
     all_methods:
     - lime_roar
     - fr_rmpm_ar
+    dice_params:
+      diversity_weight: 1.0
+      proximity_weight: 0.5
+    frpd_params:
+      kernel: 1.0
+      period: 20
+      response: true
+      theta: 0.99
     k: 3
     kfold: 5
     max_distance: 1.0
-    max_ins: 200
+    max_ins: 2
     num_future: 100
     num_samples: 1000
     params_to_vary:
@@ -227,6 +235,11 @@ ec:
         max: 5.0
         min: 0.0
         step: 0.5
+      k:
+        default: 3
+        max: 10
+        min: 2
+        step: 1
       none:
         max: 0.0
         min: 0.0
