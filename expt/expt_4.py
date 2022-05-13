@@ -268,7 +268,7 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
     plt.style.use('seaborn-deep')
     plt.rcParams.update({'font.size': 10.5})
     num_ds = len(datasets)
-    figsize_map = {4: (12, 5.5), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
+    figsize_map = {4: (20, 5.5), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
     fig, axs = plt.subplots(1, num_ds, figsize=figsize_map[num_ds])
     if num_ds == 1:
         axs = axs.reshape(-1, 1)

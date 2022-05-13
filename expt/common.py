@@ -160,6 +160,7 @@ dataset_name_map = {
     "sba": "SBA",
     "bank": "Bank",
     "student": "Student",
+    "adult": "Adult",
 }
 
 metric_order = {'cost': -1, 'valid': 1, 'diversity': 0, 'dpp': -1, 'manifold_dist': -1, 'likelihood': 0}
