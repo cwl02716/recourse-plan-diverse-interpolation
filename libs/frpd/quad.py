@@ -154,40 +154,55 @@ class Solver(object):
 
         return idx, X_diverse, X_other
 
-    def generate_recourse(self, x0, k, period=20, best_response=True):
+    def generate_recourse(self, x0, k, period=20, best_response=True, interpolate='linear'):
         idx, X_diverse, X_other = self.solve(x0, k, period, best_response)
 
-        knn = NearestNeighbors(n_neighbors=k)
-        knn.fit(self.data[self.labels == 0])
-        
         recourse_set = []
-        for i in range(X_diverse.shape[0]):
-            idx = knn.kneighbors(X_diverse[i].reshape(1, -1), return_distance=False)
-            recourse_set_i = []
-            
-            for j in range(k):
-                best_x_b = None
-                best_dist = np.inf
-                
-                lambd_list = np.linspace(0, 1, 100)
-                for lambd in lambd_list:
-                    x_b = (1 - lambd) * X_diverse[i] + lambd * self.data[self.labels == 0][idx[0][j]]
-                    label = self.model.predict(x_b)
-                    if label == 1:
-                        dist = np.linalg.norm(x0 - x_b)
-                        if dist < best_dist:
-                            best_x_b = x_b
-                            best_dist = dist
-                        
-                recourse_set_i.append(best_x_b)
-            
-            recourse_set += recourse_set_i
+
+        if interpolate == 'linear_best':
+            knn = NearestNeighbors(n_neighbors=k)
+            knn.fit(self.data[self.labels == 0])
         
+        for i in range(X_diverse.shape[0]):
+            recourse_set_i = []
+            if interpolate == 'linear_best':
+                idx = knn.kneighbors(X_diverse[i].reshape(1, -1), return_distance=False)
+            
+                for j in range(k):
+                    best_x_b = line_search(self.model, x0, X_diverse[i], self.data[self.labels == 0][idx[0][j]], p=2)
+                    recourse_set_i.append(best_x_b)
+            
+                recourse_set += recourse_set_i
+
+            elif interpolate == 'linear':
+                best_x_b = line_search(self.model, x0, X_diverse[i], x0, p=2)  
+                recourse_set.append(best_x_b)
+ 
         recourse_set = np.array(recourse_set)
-        A, S, d = self.compute_matrix(x0, recourse_set)
-        recourse_set = recourse_set[self.quad(S, d, k, cost_diverse=False) == 1]
+
+        if interpolate == 'linear_best':
+            A, S, d = self.compute_matrix(x0, recourse_set)
+            recourse_set = recourse_set[self.quad(S, d, k, cost_diverse=False) == 1]
+
 
         return recourse_set, X_diverse, X_other
+
+
+def line_search(model, x0, x1, x2, p=2):
+    best_x_b = None
+    best_dist = np.inf
+
+    lambd_list = np.linspace(0, 1, 100)
+    for lambd in lambd_list:
+        x_b = (1 - lambd) * x1 + lambd * x2
+        label = model.predict(x_b)
+        if label == 1:
+            dist = np.linalg.norm(x0 - x_b, ord=p)
+            if dist < best_dist:
+                best_x_b = x_b
+                best_dist = dist
+    
+    return best_x_b
 
 
 def generate_recourse(x0, model, random_state, params=dict()):

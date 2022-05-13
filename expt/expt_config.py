@@ -263,6 +263,7 @@ class Expt5(Config):
     "kernel": 1.0,
     "period": 20,
     "response": True,
+    "interpolate": "linear",
     }
 
     dice_params = {
