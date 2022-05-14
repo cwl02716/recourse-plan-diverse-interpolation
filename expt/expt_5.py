@@ -267,7 +267,6 @@ def plot_5_1(ec, wdir, cname, datasets, methods):
                 data[dname][mname]['dpp'].append(np.mean(res['dpp'][i]))
                 data[dname][mname]['manifold_dist'].append(np.mean(res['manifold_dist'][i]))
                 data[dname][mname]['likelihood'].append(np.mean(res['likelihood'][i]))
-            print(data[dname][mname])
 
     plt.style.use('seaborn-deep')
     plt.rcParams.update({'font.size': 10.5})
