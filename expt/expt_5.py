@@ -251,7 +251,7 @@ def plot_5_1(ec, wdir, cname, datasets, methods):
 
             data[dname][mname] = {}
             data[dname][mname]['ptv_name'] = res['ptv_name']
-            data[dname][mname]['k'] = res['k']
+            data[dname][mname]['k'] = []
             data[dname][mname]['validity'] = []
             data[dname][mname]['cost'] = []
             data[dname][mname]['diversity'] = []
@@ -259,29 +259,31 @@ def plot_5_1(ec, wdir, cname, datasets, methods):
             data[dname][mname]['manifold_dist'] = []
             data[dname][mname]['likelihood'] = []
 
-            for i in range(len(res['ptv_list'])):
+            for i in range(9):
+                data[dname][mname]['k'].append(i + 2)
                 data[dname][mname]['validity'].append(np.mean(res['validity'][i]))
                 data[dname][mname]['cost'].append(np.mean(res['cost'][i]))
                 data[dname][mname]['diversity'].append(np.mean(res['diversity'][i]))
                 data[dname][mname]['dpp'].append(np.mean(res['dpp'][i]))
                 data[dname][mname]['manifold_dist'].append(np.mean(res['manifold_dist'][i]))
                 data[dname][mname]['likelihood'].append(np.mean(res['likelihood'][i]))
+            print(data[dname][mname])
 
     plt.style.use('seaborn-deep')
     plt.rcParams.update({'font.size': 10.5})
     num_ds = len(datasets)
-    figsize_map = {4: (20, 5.5), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
+    figsize_map = {5: (40, 40), 4: (20, 5.5), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
     fig, axs = plt.subplots(num_ds, 6, figsize=figsize_map[num_ds])
     if num_ds == 1:
         axs = axs.reshape(-1, 1)
 
-    metrics = ['validity', 'cost, ''diversity', 'dpp', 'manifold_dist', 'likelihood']
+    metrics = ['validity', 'cost', 'diversity', 'dpp', 'manifold_dist', 'likelihood']
 
     for i in range(num_ds):
         for j in range(len(metrics)):
             __plot(axs[i, j], data, datasets[i], 'k', metrics[j])
             if j == 0:
-                axs[i, j].set_ylabel(label_map[datasets[i]])
+                axs[i, j].set_ylabel(dataset_name_map[datasets[i]])
             if i == len(datasets) - 1:
                 axs[i, j].set_xlabel(label_map['k'])
 

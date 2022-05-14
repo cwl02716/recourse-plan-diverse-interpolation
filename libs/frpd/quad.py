@@ -208,6 +208,7 @@ def line_search(model, x0, x1, x2, p=2):
 def generate_recourse(x0, model, random_state, params=dict()):
     data = params['train_data']
     labels = params['labels']
+    X = data[labels == 1]
     k = params['k']
 
     theta = params['frpd_params']['theta']

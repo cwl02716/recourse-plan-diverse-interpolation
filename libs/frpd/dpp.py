@@ -85,6 +85,34 @@ def map_inference_dpp_sw(kernel_matrix, window_size, max_length, epsilon=1E-10):
         selected_items.append(selected_item)
     return selected_items
  
+
+def generate_recourse(x0, model, random_state, params=dict()):
+    data = params['train_data']
+    labels = params['labels']
+    k = params['k']
+
+    theta = params['frpd_params']['theta']
+    kernel_width = params['frpd_params']['kernel']
+    period = params['frpd_params']['period']
+    best_response = params['frpd_params']['response']
+
+    quad =  Solver(model, data, labels, theta, kernel_width)
+    plans = quad.generate_recourse(x0, k, period, best_response)[0]
+    report = dict(feasible=True)
+
+    A = (X - x0).T / np.linalg.norm(X - x0, axis=1)
+    S = A.T @ A
+    d = np.linalg.norm(X - x0, axis=1)
+    D = np.exp(- d**2/sigma**2) * np.identity(d.shape[0])
+    L = gamma * S + (1 - gamma) * D
+
+    selected_items = map_inference_dpp_sw(L, 1, M)
+    print(selected_items)
+    return selected_items
+
+
+    return plans, report
+
 def dpp_recourse(x0, X, M, gamma=0.5, sigma=2.):
     """dpp recourse.
         map inference for a dpp kernel
@@ -109,12 +137,21 @@ def dpp_recourse(x0, X, M, gamma=0.5, sigma=2.):
     D = np.exp(- d**2/sigma**2) * np.identity(d.shape[0])
     L = gamma * S + (1 - gamma) * D
  
-    selected_items = map_inference_dpp(L, M)
+    selected_items = map_inference_dpp_sw(L, 1, M)
     print(selected_items)
     return selected_items
  
  
-if __name__ == '__main__':
+if __name__ == '__main__':A = (X - x0).T / np.linalg.norm(X - x0, axis=1)
+S = A.T @ A
+d = np.linalg.norm(X - x0, axis=1)
+D = np.exp(- d**2/sigma**2) * np.identity(d.shape[0])
+L = gamma * S + (1 - gamma) * D
+
+selected_items = map_inference_dpp_sw(L, 1, M)
+print(selected_items)
+return selected_items
+
     d = 2
     M = 100
  
@@ -124,9 +161,9 @@ if __name__ == '__main__':
     X = np.random.randn(M, d)
  
     print("X = ", X)
-    gamma = 1.0
+    gamma = 1
     sigma = 10.
-    slt_idx = dpp_recourse(x0, X, 10, gamma=gamma, sigma=sigma)
+    slt_idx = dpp_recourse(x0, X, 4, gamma=gamma, sigma=sigma)
     mask = np.zeros(X.shape[0], dtype=bool)
     mask[slt_idx] = True
  
