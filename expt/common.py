@@ -24,7 +24,7 @@ from libs.wachter import wachter
 from libs.projection import lime_proj
 from libs.face import face
 from libs.frpd import quad, dpp
-from libs.dice import dice
+from libs.dice import dice, dice_ga
 from rmpm import rmpm_ar, rmpm_proj, rmpm_roar
 
 
@@ -152,6 +152,7 @@ method_name_map = {
     'frpd_quad': 'FRPD-QUAD',
     'frpd_dpp': 'FRPD-DPP',
     'dice': 'DICE',
+    'dice_ga': 'DICE_GA',
 }
 
 
@@ -192,6 +193,7 @@ method_map = {
     "frpd_quad": quad,
     "frpd_dpp": dpp,
     "dice": dice,
+    "dice_ga": dice_ga,
 }
 
 

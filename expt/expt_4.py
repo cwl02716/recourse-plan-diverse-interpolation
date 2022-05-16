@@ -275,7 +275,6 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
     plt.savefig(filepath, dpi=400, bbox_inches='tight')
 
 
-            
 def run_expt_4(ec, wdir, datasets, classifiers, methods,
                num_proc=4, plot_only=False, seed=None, logger=None,
                start_index=None, num_ins=None, rerun=True):

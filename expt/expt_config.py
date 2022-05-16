@@ -217,8 +217,8 @@ class Expt4(Config):
         }, 
         'theta': {
             'default': 0.5,
-            'min': 0.15,
-            'max': 0.95,
+            'min': 0.2,
+            'max': 1.0,
             'step': 0.04,
         },
         'diversity_weight': {
@@ -235,7 +235,7 @@ class Expt4(Config):
 
     perturb_std = 1.0
     num_samples = 1000
-    max_ins = 10
+    max_ins = 20
     max_distance = 1.0
 
 

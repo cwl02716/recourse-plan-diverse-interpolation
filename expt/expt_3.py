@@ -138,6 +138,8 @@ def plot_3(ec, wdir, cname, datasets, methods):
         for mname in methods:
             l1_cost, valid, diversity, dpp, manifold_dist, likelihood, feasible = helpers.pload(
                 f'{cname}_{dname}_{mname}.pickle', wdir)
+            print(l1_cost, valid, diversity)
+            exit()
             avg = {}
             avg['cost'] = l1_cost 
             avg['valid'] = valid 

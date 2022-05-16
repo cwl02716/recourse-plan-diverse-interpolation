@@ -228,7 +228,9 @@ def plot_5_1(ec, wdir, cname, datasets, methods):
                 ax.scatter(data[dname][mname][x_label], data[dname][mname][y_label],
                            marker=(5, 1), label=method_name_map[mname], alpha=0.7, color='black', zorder=10)
             else:
-                X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
+                # X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
+                X, y = data[dname][mname][x_label], data[dname][mname][y_label]
+                print(X, y)
                 ax.plot(X, y, marker=next(iter_marker),
                         label=method_name_map[mname], alpha=0.7)
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
@@ -283,6 +285,8 @@ def plot_5_1(ec, wdir, cname, datasets, methods):
             __plot(axs[i, j], data, datasets[i], 'k', metrics[j])
             if j == 0:
                 axs[i, j].set_ylabel(dataset_name_map[datasets[i]])
+            if i == 0:
+                axs[i, j].set_xlabel(metrics[j])
             if i == len(datasets) - 1:
                 axs[i, j].set_xlabel(label_map['k'])
 
@@ -302,7 +306,6 @@ def plot_5_1(ec, wdir, cname, datasets, methods):
     joint_dname = ''.join([e[:2] for e in datasets])
     filepath = os.path.join(wdir, f"{cname}_{joint_dname}.pdf")
     plt.savefig(filepath, dpi=400, bbox_inches='tight')
-
 
             
 def run_expt_5(ec, wdir, datasets, classifiers, methods,

@@ -151,6 +151,8 @@ ec:
       diversity_weight: 1.0
       proximity_weight: 0.5
     frpd_params:
+      greedy: true
+      interpolate: linear
       kernel: 1.0
       period: 20
       response: true
@@ -158,7 +160,7 @@ ec:
     k: 3
     kfold: 5
     max_distance: 1.0
-    max_ins: 10
+    max_ins: 20
     num_future: 100
     num_samples: 1000
     params_to_vary:
@@ -188,8 +190,8 @@ ec:
         step: 1.0
       theta:
         default: 0.5
-        max: 0.95
-        min: 0.15
+        max: 1.0
+        min: 0.2
         step: 0.04
     perturb_radius:
       german: 0.2
@@ -216,6 +218,7 @@ ec:
       diversity_weight: 1.0
       proximity_weight: 0.5
     frpd_params:
+      greedy: true
       interpolate: linear
       kernel: 1.0
       period: 20
