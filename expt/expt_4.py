@@ -191,6 +191,7 @@ def plot_4(ec, wdir, cname, dname, methods):
             data[mname]['dpp'].append(np.mean(res['dpp'][i]))
 
     plot(methods, 'cost', 'diversity', data)
+    plot(method, 'cost', 'dpp', data)
 
 
 def plot_4_1(ec, wdir, cname, datasets, methods):
