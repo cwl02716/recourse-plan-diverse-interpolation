@@ -118,15 +118,18 @@ def run(ec, wdir, dname, cname, mname,
 
         cost = []
         diversity = []
+        dpp = []
         feasible = []
 
         for ret in rets:
             cost.append(ret.l1_cost)
             diversity.append(ret.diversity)
+            dpp.append(ret.dpp)
             feasible.append(ret.feasible)
 
         res['cost'].append(np.array(cost))
         res['diversity'].append(np.array(diversity))
+        res['dpp'].append(np.array(dpp))
         res['feasible'].append(np.array(feasible))
 
     helpers.pdump(res,
@@ -138,6 +141,7 @@ def run(ec, wdir, dname, cname, mname,
 
 label_map = {
     'diversity': "Diversity",
+    'dpp': "DPP",
     'cost': 'Cost',
 }
 
@@ -179,10 +183,12 @@ def plot_4(ec, wdir, cname, dname, methods):
         data[mname]['ptv_list'] = res['ptv_list']
         data[mname]['cost'] = []
         data[mname]['diversity'] = []
+        data[mname]['dpp'] = []
 
         for i in range(len(res['ptv_list'])):
             data[mname]['cost'].append(np.mean(res['cost'][i]))
             data[mname]['diversity'].append(np.mean(res['diversity'][i]))
+            data[mname]['dpp'].append(np.mean(res['dpp'][i]))
 
     plot(methods, 'cost', 'diversity', data)
 
@@ -224,11 +230,12 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
             data[dname][mname]['ptv_list'] = res['ptv_list']
             data[dname][mname]['cost'] = []
             data[dname][mname]['diversity'] = []
+            data[dname][mname]['dpp'] = []
 
             for i in range(len(res['ptv_list'])):
                 data[dname][mname]['cost'].append(np.mean(res['cost'][i]))
                 data[dname][mname]['diversity'].append(np.mean(res['diversity'][i]))
-
+                data[dname][mname]['dpp'].append(np.mean(res['dpp'][i]))
 
     plt.style.use('seaborn-deep')
     plt.rcParams.update({'font.size': 10.5})
@@ -238,15 +245,15 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
     if num_ds == 1:
         axs = axs.reshape(-1, 1)
 
-    metrics = ['diversity']
+    metrics = ['diversity', 'dpp']
 
     for i in range(num_ds):
         for j in range(len(metrics)):
-            __plot(axs[i], data, datasets[i], 'cost', metrics[j])
+            __plot(axs[j, i], data, datasets[i], 'cost', metrics[j])
             if i == 0:
-                axs[i].set_ylabel(label_map[metrics[j]])
+                axs[j, i].set_ylabel(label_map[metrics[j]])
             if j == len(metrics) - 1:
-                axs[i].set_xlabel(label_map['cost'])
+                axs[j, i].set_xlabel(label_map['cost'])
 
     marker = reversed(['+', 'v', '^', 'o', (5, 0)])
     iter_marker = itertools.cycle(marker)
