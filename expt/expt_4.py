@@ -77,6 +77,7 @@ def run(ec, wdir, dname, cname, mname,
     res['ptv_list'] = ptv_list
     res['cost'] = []
     res['diversity'] = []
+    res['dpp'] = []
     res['feasible'] = []
 
     for value in ptv_list:
