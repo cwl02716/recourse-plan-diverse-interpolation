@@ -182,6 +182,8 @@ class Expt4(Config):
         "kernel": 1.0,
         "period": 20,
         "response": True,
+        "interpolate": "linear",
+        "greedy": True,
     }
 
     dice_params = {
@@ -261,11 +263,12 @@ class Expt5(Config):
     }
 
     frpd_params = {
-    "theta": 0.99,
-    "kernel": 1.0,
-    "period": 20,
-    "response": True,
-    "interpolate": "linear",
+        "theta": 0.99,
+        "kernel": 1.0,
+        "period": 20,
+        "response": True,
+        "interpolate": "linear",
+        "greedy": True,
     }
 
     dice_params = {
