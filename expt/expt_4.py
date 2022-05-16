@@ -37,6 +37,7 @@ param_to_vary = {
     "wachter": "none",
     "dice": "diversity_weight",
     "frpd_quad": "theta",
+    "frpd_dpp": "theta",
 }
 
 
