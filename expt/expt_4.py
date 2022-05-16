@@ -43,7 +43,6 @@ param_to_vary = {
 
 def run(ec, wdir, dname, cname, mname,
         num_proc, seed, logger, start_index=None, num_ins=None):
-    # logger.info("Running dataset: %s, classifier: %s, method: %s...",
                 # dname, cname, mname)
     print("Running dataset: %s, classifier: %s, method: %s..." %
                 (dname, cname, mname))
@@ -56,22 +55,16 @@ def run(ec, wdir, dname, cname, mname,
 
     y = df['label'].to_numpy()
     X_df = df.drop('label', axis=1)
-    # transformer = get_transformer(dname)
     X = transformer.transform(X_df).to_numpy()
-    # cat_indices = transformer.cat_indices
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8,
                                                         random_state=42, stratify=y)
-    # enriched_data = enrich_training_data(5000, X_train, cat_indices, seed)
 
     d = X.shape[1]
     clf = clf_map[cname]
-    # cur_models = load_models(dname, cname, ec.kfold, wdir)
     model = load_models(dname, cname, wdir)
 
-    # kf = KFold(n_splits=ec.kfold)
     ptv = param_to_vary[mname]
-    # mname_short = mname.replace('_delta', '').replace('_rho', '')
     method = method_map[mname]
 
     min_ptv = ec.params_to_vary[ptv]['min']
@@ -82,33 +75,13 @@ def run(ec, wdir, dname, cname, mname,
     res = dict()
     res['ptv_name'] = ptv
     res['ptv_list'] = ptv_list
-    # res['delta_max_df'] = ec.roar_params['delta_max']
-    # res['rho_neg_df'] = ec.rmpm_params['rho_neg']
     res['cost'] = []
     res['diversity'] = []
-    # res['cur_vald'] = []
-    # res['fut_vald'] = []
     res['feasible'] = []
 
     for value in ptv_list:
-        # logger.info("varying %s = %f", ptv, value)
         print("varying %s = %f" % (ptv, value))
-        # new_config = copy.deepcopy(ec)
         new_config = Expt4(ec.to_dict())
-        # if ptv == 'rho_neg':
-        #     new_config.rmpm_params[ptv] = value
-        # elif ptv == 'delta_max':
-        #     new_config.roar_params[ptv] = value
-        # new_config.max_distance = compute_max_distance(X_train)
-
-        # train_index, _ = next(kf.split(X_train))
-        # X_training, y_training = X_train[train_index], y_train[train_index]
-
-        # model = cur_models[0]
-        # shifted_models = load_models(dname + f'_shift_{0}', cname, ec.num_future, wdir)
-
-        # X_all = np.vstack([X_test, X_training])
-        # y_all = np.concatenate([y_test, y_training])
         y_pred = model.predict(X_test)
         uds_X, uds_y = X_test[y_pred == 0], y_test[y_pred == 0]
 
@@ -130,7 +103,6 @@ def run(ec, wdir, dname, cname, mname,
                       k=ec.k,
                       transformer=transformer,)
 
-        params['perturb_radius'] = ec.perturb_radius[dname]
         params['frpd_params'] = ec.frpd_params
         params['dice_params'] = ec.dice_params
 
@@ -138,14 +110,7 @@ def run(ec, wdir, dname, cname, mname,
             params['frpd_params']['theta'] = value
         elif ptv == 'diversity_weight':
             params['dice_params']['diversity_weight'] = value
-
-        # jobs_args = []
-
-        # for idx, x0 in enumerate(uds_X):
-            # jobs_args.append((idx, method, x0, model, shifted_models, seed, logger, params))
-
-        # rets = joblib.Parallel(n_jobs=num_proc, prefer="threads")(joblib.delayed(_run_single_instance)(
-            # *jobs_args[i]) for i in range(len(jobs_args)))
+        
         rets = []
         for idx, x0 in enumerate(uds_X):
             ret = _run_single_instance_plans(idx, method, x0, model, seed, logger, params)
@@ -209,7 +174,6 @@ def plot_4(ec, wdir, cname, dname, methods):
         res = helpers.pload(
             f'{cname}_{dname}_{mname}.pickle', wdir)
 
-        # print(res)
         data[dname][mname] = {}
         data[mname]['ptv_name'] = res['ptv_name']
         data[mname]['ptv_list'] = res['ptv_list']
