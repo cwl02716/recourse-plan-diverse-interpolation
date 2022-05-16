@@ -1,5 +1,5 @@
 mlp:
-  german:
+  adult:
     accuracy: !!python/object/apply:numpy.core.multiarray.scalar
     - &id001 !!python/object/apply:numpy.dtype
       args:
@@ -16,26 +16,44 @@ mlp:
       - -1
       - 0
     - !!binary |
-      XI/C9Shc5z8=
+      VgoJujOc6j8=
     auc: !!python/object/apply:numpy.core.multiarray.scalar
     - *id001
     - !!binary |
-      Q859dgGx5j8=
+      1HuvMH8+7D8=
+  bank:
+    accuracy: !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      vhk96LNk7D8=
+    auc: !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      eKQW4/ex5T8=
+  german:
+    accuracy: !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      hetRuB6F5z8=
+    auc: !!python/object/apply:numpy.core.multiarray.scalar
+    - *id001
+    - !!binary |
+      NpWGnPts5j8=
   sba:
     accuracy: !!python/object/apply:numpy.core.multiarray.scalar
     - *id001
     - !!binary |
-      RSPOaWo97z8=
+      /1n8DfUp7z8=
     auc: !!python/object/apply:numpy.core.multiarray.scalar
     - *id001
     - !!binary |
-      sk2IO9bM7z8=
+      2mPSOrvK7z8=
   student:
     accuracy: !!python/object/apply:numpy.core.multiarray.scalar
     - *id001
     - !!binary |
-      zczMzMzM7D8=
+      jtzIjdzI7T8=
     auc: !!python/object/apply:numpy.core.multiarray.scalar
     - *id001
     - !!binary |
-      Wxn8J+bI7j8=
+      UX07HkoI7z8=

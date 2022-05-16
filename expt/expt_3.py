@@ -40,26 +40,18 @@ def run(ec, wdir, dname, cname, mname,
     
     y = df['label'].to_numpy()
     X_df = df.drop('label', axis=1)
-    # transformer = get_transformer(dname)
     X = transformer.transform(X_df).to_numpy()
-    # cat_indices = transformer.cat_indices
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8,
                                                         random_state=42, stratify=y)
-    # enriched_data = enrich_training_data(5000, X_train, cat_indices, seed)
 
     new_config = Expt3(ec.to_dict())
-    # if 'roar' in mname:
-        # new_config.rmpm_params['rho_neg'] = 1.0
     new_config.max_distance = compute_max_distance(X_train)
 
     d = X.shape[1]
     clf = clf_map[cname]
-    # cur_models = load_models(dname, cname, ec.kfold, wdir)
     model = load_models(dname, cname, wdir)
     method = method_map[mname]
-
-    # kf = KFold(n_splits=ec.kfold)
 
     l1_cost = []
     valid = []
@@ -69,15 +61,6 @@ def run(ec, wdir, dname, cname, mname,
     likelihood = []
     feasible = []
 
-    # for i, (train_index, cross_index) in enumerate(kf.split(X_train)):
-    # X_training, X_cross = X_train[train_index], X_train[cross_index]
-    # y_training, y_cross = y_train[train_index], y_train[cross_index]
-
-    # model = cur_models[i]
-    # shifted_models = load_models(dname + f'_shift_{i}', cname, ec.num_future, wdir)
-
-    # X_all = np.vstack([X_test, X_training])
-    # y_all = np.concatenate([y_test, y_training])
     y_pred = model.predict(X_test)
     uds_X, uds_y = X_test[y_pred == 0], y_test[y_pred == 0]
     uds_X, uds_y = uds_X[:ec.max_ins], uds_y[:ec.max_ins]
@@ -91,7 +74,6 @@ def run(ec, wdir, dname, cname, mname,
                   k=ec.k,
                   transformer=transformer,)
 
-    params['perturb_radius'] = ec.perturb_radius[dname]
     params['frpd_params'] = ec.frpd_params
     params['dice_params'] = ec.dice_params
 
@@ -102,16 +84,6 @@ def run(ec, wdir, dname, cname, mname,
 
     rets = joblib.Parallel(n_jobs=min(num_proc, 8), prefer="threads")(joblib.delayed(_run_single_instance_plans)(*jobs_args[i]) for i in range(len(jobs_args)))
 
-        # rets = []
-        # for idx, x0 in enumerate(uds_X):
-            # ret = _run_single_instance(idx, method, x0, model, shifted_models, seed, logger, params)
-            # rets.append(ret)
-
-        # l1_cost_ = []
-        # valid_ = []
-        # diversity_ = []
-        # feasible_ = []
-
     for ret in rets:
         l1_cost.append(ret.l1_cost)
         valid.append(ret.valid)
@@ -120,11 +92,6 @@ def run(ec, wdir, dname, cname, mname,
         manifold_dist.append(ret.manifold_dist)
         likelihood.append(ret.likelihood)
         feasible.append(ret.feasible)
-
-        # l1_cost.append(l1_cost_)
-        # valid.append(valid_)
-        # diversity.append(diversity_)
-        #  feasible.append(feasible_)
 
     def to_numpy_array(lst):
         pad = len(max(lst, key=len))
@@ -162,33 +129,25 @@ def plot_3(ec, wdir, cname, datasets, methods):
                 joint_feasible = np.ones_like(feasible)
             if '_ar' in mname:
                 joint_feasible = np.logical_and(joint_feasible, feasible)
-            # print(mname, np.sum(feasible, axis=1))
 
         temp = defaultdict(dict)
 
         for metric, order in metric_order.items():
             temp[metric]['best'] = -np.inf
 
-        f_feasible = (np.sum(joint_feasible, axis=1) > 0)
-
         for mname in methods:
             l1_cost, valid, diversity, dpp, manifold_dist, likelihood, feasible = helpers.pload(
                 f'{cname}_{dname}_{mname}.pickle', wdir)
             avg = {}
-            avg['cost'] = l1_cost # np.sum(l1_cost * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['valid'] = valid # np.sum(valid * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['diversity'] = diversity # np.sum(diversity * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['dpp'] = dpp # np.sum(dpp * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['manifold_dist'] = manifold_dist # np.sum(manifold_dist * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-            avg['likelihood'] = likelihood # np.sum(likelihood * joint_feasible, axis=1) / np.sum(joint_feasible, axis=1)
-
-            # avg['cost'] = np.mean(l1_cost, axis=1) 
-            # avg['cur-vald'] = np.mean(cur_vald, axis=1) 
-            # avg['fut-vald'] = np.mean(fut_vald, axis=1)
+            avg['cost'] = l1_cost 
+            avg['valid'] = valid 
+            avg['diversity'] = diversity 
+            avg['dpp'] = dpp 
+            avg['manifold_dist'] = manifold_dist 
+            avg['likelihood'] = likelihood 
 
             for metric, order in metric_order.items():
                 m, s = np.mean(avg[metric]), np.std(avg[metric])
-                # m, s = np.mean(avg[metric][f_feasible]), np.std(avg[metric][f_feasible])
                 temp[metric][mname] = (m, s)
                 temp[metric]['best'] = max(temp[metric]['best'], m * order)
 
@@ -203,8 +162,6 @@ def plot_3(ec, wdir, cname, datasets, methods):
                 res2[f"{metric}-{dname[:2]}"].append(to_mean_std(m, s, is_best))
 
             res[f'feasible'].append("{:.2f}".format(temp['feasible'][mname]))
-            # res[f'joint_feasible'].append(np.mean(joint_feasible))
-            # res[f'num_ins'].append(joint_feasible.shape[1])
 
     df = pd.DataFrame(res)
     print(df)

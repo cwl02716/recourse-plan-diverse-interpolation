@@ -140,12 +140,12 @@ class Expt3(Config):
 
     kfold = 2
     num_future = 2
-    k = 3
+    k = 2
     cross_validate = False 
 
     perturb_std = 1.0
     num_samples = 1000
-    max_ins = 2
+    max_ins = 100
     sigma_neighbors = 0.001
 
     max_distance = 1.0
