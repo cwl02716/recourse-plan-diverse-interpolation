@@ -23,7 +23,7 @@ from libs.mace import mace
 from libs.wachter import wachter
 from libs.projection import lime_proj
 from libs.face import face
-from libs.frpd import quad
+from libs.frpd import quad, dpp
 from libs.dice import dice
 from rmpm import rmpm_ar, rmpm_proj, rmpm_roar
 
@@ -150,6 +150,7 @@ method_name_map = {
     'fr_rmpm_roar_delta': "FR-MPM-ROAR (2)",
     'face': "FACE",
     'frpd_quad': 'FRPD-QUAD',
+    'frpd_dpp': 'FRPD-DPP',
     'dice': 'DICE',
 }
 
@@ -189,6 +190,7 @@ method_map = {
     "fr_rmpm_roar": rmpm_roar,
     "face": face,
     "frpd_quad": quad,
+    "frpd_dpp": dpp,
     "dice": dice,
 }
 

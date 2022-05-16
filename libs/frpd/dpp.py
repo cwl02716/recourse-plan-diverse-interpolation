@@ -3,6 +3,8 @@ import torch
 import dppy
 import math
 import matplotlib.pyplot as plt
+
+from libs.frpd.quad import line_search
  
  
 def map_inference_dpp(kernel_matrix, max_length, epsilon=1E-10):
@@ -90,28 +92,34 @@ def generate_recourse(x0, model, random_state, params=dict()):
     data = params['train_data']
     labels = params['labels']
     k = params['k']
+    X = data[labels == 1]
 
     theta = params['frpd_params']['theta']
-    kernel_width = params['frpd_params']['kernel']
-    period = params['frpd_params']['period']
-    best_response = params['frpd_params']['response']
+    kernel_width = params['frpd_params']['kernel']    
+    interpolate = params['frpd_params']['interpolate']
+    greedy = params['frpd_params']['greedy']
 
-    quad =  Solver(model, data, labels, theta, kernel_width)
-    plans = quad.generate_recourse(x0, k, period, best_response)[0]
     report = dict(feasible=True)
 
     A = (X - x0).T / np.linalg.norm(X - x0, axis=1)
     S = A.T @ A
     d = np.linalg.norm(X - x0, axis=1)
-    D = np.exp(- d**2/sigma**2) * np.identity(d.shape[0])
-    L = gamma * S + (1 - gamma) * D
+    D = np.exp(-d ** 2 / kernel_width ** 2) * np.identity(d.shape[0])
+    L = theta * S + (1 - theta) * D
 
-    selected_items = map_inference_dpp_sw(L, 1, M)
-    print(selected_items)
-    return selected_items
+    idx = map_inference_dpp(L, k) if greedy else map_inference_dpp_sw(L, 1, k)
+    X_diverse = X[idx, :]
 
+    recourse_set = []
+    for i in range(k):
+        if interpolate == 'linear':
+            best_x_b = line_search(model, x0, X_diverse[i], x0, p=2)
+            recourse_set.append(best_x_b)
+    
+    plans = np.array(recourse_set)
 
     return plans, report
+
 
 def dpp_recourse(x0, X, M, gamma=0.5, sigma=2.):
     """dpp recourse.
@@ -142,16 +150,7 @@ def dpp_recourse(x0, X, M, gamma=0.5, sigma=2.):
     return selected_items
  
  
-if __name__ == '__main__':A = (X - x0).T / np.linalg.norm(X - x0, axis=1)
-S = A.T @ A
-d = np.linalg.norm(X - x0, axis=1)
-D = np.exp(- d**2/sigma**2) * np.identity(d.shape[0])
-L = gamma * S + (1 - gamma) * D
-
-selected_items = map_inference_dpp_sw(L, 1, M)
-print(selected_items)
-return selected_items
-
+if __name__ == '__main__':
     d = 2
     M = 100
  

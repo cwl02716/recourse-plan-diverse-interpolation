@@ -113,6 +113,8 @@ ec:
       fraction: 0.2
       mode: knn
     frpd_params:
+      greedy: true
+      interpolate: linear
       kernel: 1.0
       period: 20
       response: true
