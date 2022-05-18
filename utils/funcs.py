@@ -232,7 +232,7 @@ def compute_distance_manifold(plans, train_data_1, k):
         idx = knn.kneighbors(plans[i].reshape(1, -1), return_distance=False)
         dist[i] = np.linalg.norm(plans[i] - train_data_1[idx])
 
-    return np.mean(dist)
+    return np.max(dist)
 
 
 def compute_likelihood(plans, train_data_1, k, gamma=100.):
