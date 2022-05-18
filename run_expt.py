@@ -6,6 +6,7 @@ from expt.expt_2 import run_expt_2
 from expt.expt_3 import run_expt_3
 from expt.expt_4 import run_expt_4
 from expt.expt_5 import run_expt_5
+from expt.run_time import run_expt_run_time
 from utils.helpers import make_logger
 import logging
 import matplotlib
@@ -81,3 +82,5 @@ if __name__ == '__main__':
                        classifiers=args.classifiers, num_proc=args.num_proc,
                        plot_only=args.plot_only, seed=args.seed, logger=logger,
                        start_index=args.start_index, num_ins=args.num_ins)
+        if ept == 'time':
+            run_expt_run_time(None, None, None, None, None, logger=logger)

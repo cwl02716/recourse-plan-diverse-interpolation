@@ -90,8 +90,6 @@ def _run_single_instance(idx, method, x0, model, shifted_models, seed, logger, p
     l1_cost = lp_dist(x0, x_ar, p=1)
     cur_vald = model.predict(x_ar)
     fut_vald = calc_future_validity(x_ar, shifted_models)
-    # print(l1_cost, cur_vald, fut_vald, report['feasible'])
-    # raise ValueError
 
     return Results(l1_cost, cur_vald, fut_vald, report['feasible'])
 
@@ -110,9 +108,7 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     full_dice_data = dice_ml.Data(dataframe=df,
                               continuous_features=numerical,
                               outcome_name='label')
-    # transformer = DataTransformer(full_dice_data)
-
-    # x_ar, report = method.generate_recourse(x0, model, random_state, params)
+    
     plans, report = method.generate_recourse(x0, model, random_state, params)
 
     valid = compute_validity(model, plans)

@@ -24,6 +24,9 @@ from utils.transformer import get_transformer
 from utils.data_transformer import DataTransformer
 from utils.funcs import compute_max_distance, lp_dist, find_pareto
 
+from libs.frpd.quad import quad_recourse
+from libs.frpd.dpp import dpp_recourse
+
 from expt.common import synthetic_params, clf_map, method_map, method_name_map
 from expt.common import dataset_name_map 
 from expt.common import _run_single_instance, _run_single_instance_plans, to_numpy_array
@@ -277,45 +280,104 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
     plt.savefig(filepath, dpi=400, bbox_inches='tight')
 
 
-def run_expt_1(ec, wdir, datasets, classifiers, methods,
+def run_expt_run_time(ec, wdir, datasets, classifiers, methods,
                num_proc=4, plot_only=False, seed=None, logger=None,
                start_index=None, num_ins=None, rerun=True):
-    logger.info("Running ept 4...")
+    logger.info("Running ept run time...")
+    df, numerical = helpers.get_dataset("synthesis", params=synthetic_params)
+    full_dice_data = dice_ml.Data(dataframe=df,
+                    continuous_features=numerical,
+                    outcome_name='label')
+    transformer = DataTransformer(full_dice_data)
 
-    if datasets is None or len(datasets) == 0:
-        datasets = ec.e4.all_datasets
+    y = df['label'].to_numpy()
+    X_df = df.drop('label', axis=1)
+    X = transformer.transform(X_df).to_numpy()
 
-    if classifiers is None or len(classifiers) == 0:
-        classifiers = ec.e4.all_clfs
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8,
+                                                        random_state=42, stratify=y)
 
-    if methods is None or len(methods) == 0:
-        methods = ec.e4.all_methods
+    d = X.shape[1]
+    clf = clf_map["mlp"]
+    model = load_models("synthesis", "mlp", "results/run_0/synthesis")
+
+    y_pred = model.predict(X_test)
+    uds_X, uds_y = X_test[y_pred == 0], y_test[y_pred == 0]
+    uds_X, uds_y = uds_X[:2], uds_y[:2]
+
+    ptv = "N"
+    ptv_list = [100 * i for i in range(1, 50, 5)]
+    
+    time_greedy = []
+    time_local  = []
+    time_quad = []
+
+    for value in ptv_list:
+        _time_greedy = []
+        _time_local = []
+        _time_quad = []
+
+        synthetic_params['num_samples'] = value
+        df, numerical = helpers.get_dataset("synthesis", params=synthetic_params)
+        full_dice_data = dice_ml.Data(dataframe=df,
+                        continuous_features=numerical,
+                        outcome_name='label')
+        transformer = DataTransformer(full_dice_data)
+
+        y = df['label'].to_numpy()
+        X_df = df.drop('label', axis=1)
+        X = transformer.transform(X_df).to_numpy()
+
+        for i in range(len(uds_y)):
+            cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = dpp_recourse(uds_X[i, :], X[y == 1], 5, gamma=0.5, sigma=2.)
+            quad_time = quad_recourse(uds_X[i, :], 5, model, X, y, 0.5, 2.)
+            _time_greedy.append(greedy_time)
+            _time_local.append(ls_time)
+            _time_quad.append(quad_time)
+
+        _time_greedy = np.array(_time_greedy)
+        _time_local = np.array(_time_local)
+        _time_quad = np.array(_time_quad)
+
+        time_greedy.append(np.mean(_time_greedy))
+        time_local.append(np.mean(_time_local))
+        time_quad.append(np.mean(_time_quad))
+
+    res = {}
+    res['greedy'] = time_greedy
+    res['local'] = time_local
+    res['quad'] = time_quad
+
+    helpers.pdump(res, "time.pickle", "results/run_0/")
+
+    # Matplotlib config
+    SMALL_SIZE = 8
+    MEDIUM_SIZE = 12
+    BIGGER_SIZE = 18
+
+    plt.rc('font', size=BIGGER_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=BIGGER_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=MEDIUM_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=MEDIUM_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=BIGGER_SIZE)    # legend fontsize
+
+    # Plot
+    fig, ax = plt.subplots()
+
+    ax.plot(ptv_list, time_greedy, label='Greedy', linewidth=5.0)
+    ax.plot(ptv_list, time_local, label='Local search', linewidth=5.0)
+    ax.plot(ptv_list, time_quad, label='Quad', linewidth=5.0)
+    print(time_greedy, time_local, time_quad)
+
+    ax.set(xlabel='$N$', ylabel='time')
+    ax.grid()
+    ax.legend(loc='lower right', frameon=False)
+    # plt.ylim(0, 1.02)
+    plt.savefig('results/run_0/time.pdf', dpi=400)
+    plt.tight_layout()
+
+    plt.show()# Define shift params
 
 
-    if not plot_only:
-        jobs_args = []
-
-        for cname in classifiers:
-            cmethods = copy.deepcopy(methods)
-            if cname == 'rf' and 'wachter' in cmethods:
-                cmethods.remove('wachter')
-
-            for dname in datasets:
-                for mname in cmethods:
-                    filepath = os.path.join(wdir, f"{cname}_{dname}_{mname}.pickle")
-                    if not os.path.exists(filepath) or rerun:
-                        jobs_args.append((ec.e4, wdir, dname, cname, mname,
-                            num_proc, seed, logger, start_index, num_ins))
-
-        rets = joblib.Parallel(n_jobs=num_proc)(joblib.delayed(run)(
-            *jobs_args[i]) for i in range(len(jobs_args)))
-
-    for cname in classifiers:
-        cmethods = copy.deepcopy(methods)
-        if cname == 'rf' and 'wachter' in cmethods:
-            cmethods.remove('wachter')            
-        for dname in datasets:
-            plot_4(ec.e4, wdir, cname, dname, cmethods)
-        plot_4_1(ec.e4, wdir, cname, datasets, cmethods)
-
-    logger.info("Done ept 4.")
+    logger.info("Done ept run time.")

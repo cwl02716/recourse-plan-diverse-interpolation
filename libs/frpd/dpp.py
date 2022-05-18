@@ -1,13 +1,14 @@
+import time
 import numpy as np
 import torch
 import dppy
 import math
 import matplotlib.pyplot as plt
 
-from libs.frpd.quad import line_search
+# from libs.frpd.quad import line_search
  
  
-def map_inference_dpp(kernel_matrix, max_length, epsilon=1E-10):
+def map_inference_dpp_greedy(kernel_matrix, max_length, epsilon=1E-10):
     """
     Our proposed fast implementation of the greedy algorithm
     :param kernel_matrix: 2-d array
@@ -25,7 +26,9 @@ def map_inference_dpp(kernel_matrix, max_length, epsilon=1E-10):
         k = len(selected_items) - 1
         ci_optimal = cis[:k, selected_item]
         di_optimal = math.sqrt(di2s[selected_item])
+        # start_x_time = time.time()
         elements = kernel_matrix[selected_item, :]
+        # print("elements: ", time.time() - start_x_time)
         eis = (elements - np.dot(ci_optimal, cis[:k, :])) / di_optimal
         cis[k, :] = eis
         di2s -= np.square(eis)
@@ -34,9 +37,12 @@ def map_inference_dpp(kernel_matrix, max_length, epsilon=1E-10):
         # if di2s[selected_item] < epsilon:
             # break
         selected_items.append(selected_item)
-    return selected_items
  
+    S = np.sort(np.array(selected_items))
+    # det_L = np.linalg.det(kernel_matrix + np.identity(item_size))
+    return S, np.linalg.det(kernel_matrix[S.reshape(-1, 1), S.reshape(1, -1)]) 
  
+
 def map_inference_dpp_sw(kernel_matrix, window_size, max_length, epsilon=1E-10):
     """
     Sliding window version of the greedy algorithm
@@ -86,6 +92,150 @@ def map_inference_dpp_sw(kernel_matrix, window_size, max_length, epsilon=1E-10):
             break
         selected_items.append(selected_item)
     return selected_items
+
+
+def map_inference_dpp_local_search(L, k, verbose=False):
+    start_time = time.time()
+    greedy_sol, greedy_prob = map_inference_dpp_greedy(L, k)
+    greedy_time = time.time() - start_time
+
+    cur_sol = greedy_sol.copy()
+    cur_prob = greedy_prob
+
+    N = L.shape[0]
+    all_idx = np.array(range(N))
+    ns_idx = np.setdiff1d(all_idx, cur_sol)
+
+    it = 0
+    while True:
+        best_neighbors = None
+        best_neighbors_prob = cur_prob
+        si, sj = -1, -1
+        localopt = True
+
+        for i in range(len(cur_sol)):
+            for v in ns_idx:
+                neighbor = cur_sol.copy()
+                neighbor[i] = v
+                L_S = L[neighbor.reshape(-1, 1), neighbor.reshape(1, -1)]
+                prob = np.linalg.det(L_S)
+                if prob > best_neighbors_prob:
+                    best_neighbors = neighbor
+                    si, sj = cur_sol[i], v
+                    best_neighbors_prob = prob
+                    localopt = False
+
+        if verbose:
+            print("Iter ", it)
+            print("Best neighbor: ({}, {})".format(si, sj))
+            print("Best neighbor prob: ", best_neighbors_prob)
+
+        if not localopt:
+            cur_sol = best_neighbors
+            cur_prob = best_neighbors_prob
+            ns_idx = np.setdiff1d(all_idx, cur_sol)
+        else:
+            break
+        it += 1
+
+    ls_time = time.time() - start_time
+    return cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time
+
+
+def map_inference_dpp_local_search_2(L, k, verbose=False):
+    start_time = time.time()
+    greedy_sol, greedy_prob = map_inference_dpp_greedy(L, k)
+    greedy_time = time.time() - start_time
+
+    if verbose:
+        print("Prob: ", greedy_prob)
+
+    cur_sol = greedy_sol.copy()
+    cur_prob = greedy_prob
+
+    N = L.shape[0]
+    all_idx = np.array(range(N))
+    ns_idx = np.setdiff1d(all_idx, cur_sol)
+
+    # L = np.arange(100).reshape(10, 10)
+    L_S = L[cur_sol[:, np.newaxis], cur_sol]
+    it = 0
+
+    while True:
+        start_iter_time = time.time()
+
+        idx = np.array(range(len(cur_sol)))
+        best_removal_idx = 0
+        best_removal_prob = 0
+
+        for i in range(len(cur_sol)):
+            # cur_sol[i], cur_sol[-1] = cur_sol[-1], cur_sol[i]
+            idx[i], idx[-1] = idx[-1], idx[i]
+            L_Se = L_S[idx[:-1, np.newaxis], idx[:-1]]
+            prob = np.linalg.det(L_Se)
+
+            if prob > best_removal_prob:
+                best_removal_idx = i
+                best_removal_prob = prob
+
+        brid = best_removal_idx
+        br = cur_sol[brid]
+
+        best_neighbors = cur_sol.copy()
+        best_add = -1
+        best_neighbors_prob = cur_prob
+        localopt = True
+
+        for v in ns_idx:
+            cur_sol[brid] = v
+            L_S[brid, :] = L[v, cur_sol]
+            L_S[:, brid] = L[cur_sol, v]
+            prob = np.linalg.det(L_S)
+
+            if prob > best_neighbors_prob:
+                best_neighbors_prob = prob
+                best_add = v
+                localopt = False
+
+        if verbose:
+            print("Iter {}:".format(it))
+            print("remove item: ", br)
+            print("add item: ", best_add)
+            print("best_neighbors_prob: ", best_neighbors_prob)
+
+        if not localopt:
+            cur_sol[brid] = best_add
+            cur_prob = best_neighbors_prob
+            L_S[brid, :] = L[best_add, cur_sol]
+            L_S[:, brid] = L[cur_sol, best_add]
+            ns_idx = np.setdiff1d(all_idx, cur_sol)
+        else:
+            cur_sol = best_neighbors
+            cur_prob = best_neighbors_prob
+            break
+        it += 1
+
+    ls_time = time.time() - start_time
+    return cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time
+
+
+def map_inference_dpp_brute_force(L, k):
+    start_time = time.time()
+    N = L.shape[0]
+    # I = np.identity(N)
+    best_prob = 0
+    best_s = np.array([])
+
+    for subset in itertools.combinations(list(range(N)), k):
+        S = np.array(subset, dtype=int).reshape(-1, 1)
+
+        L_S = L[S, S.T]
+        P_Ls = np.linalg.det(L_S)
+        if best_prob < P_Ls:
+            best_prob = P_Ls
+            best_s = S
+
+    return best_s.reshape(-1), best_prob, time.time() - start_time
  
 
 def generate_recourse(x0, model, random_state, params=dict()):
@@ -146,8 +296,11 @@ def dpp_recourse(x0, X, M, gamma=0.5, sigma=2.):
     L = gamma * S + (1 - gamma) * D
  
     selected_items = map_inference_dpp_sw(L, 1, M)
-    print(selected_items)
-    return selected_items
+    cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = map_inference_dpp_local_search(L, M, verbose=False)
+    print(cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time)
+    # cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = map_inference_dpp_local_search_2(L, M, verbose=False)
+
+    return cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time
  
  
 if __name__ == '__main__':

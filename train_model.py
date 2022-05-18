@@ -54,7 +54,7 @@ def train(clf_name, data_name, wdir, lr, num_epoch, seed=123, verbose=False, num
     append_arrival = False 
 
     # transformer = get_transformer(data_name)
-    df, numerical = helpers.get_full_dataset(data_name, params=synthetic_params)
+    df, numerical = helpers.get_full_dataset(data_name, params=synthetic_params) if data_name != 'synthesis' else helpers.get_dataset(data_name, params=synthetic_params)
     full_dice_data = dice_ml.Data(dataframe=df,
                          continuous_features=numerical,
                          outcome_name='label')

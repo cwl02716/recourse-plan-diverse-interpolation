@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from scipy.linalg import eigh
 from sklearn.neighbors import NearestNeighbors
@@ -35,9 +36,9 @@ class Solver(object):
 
         # Set objectives
         if cost_diverse:
-            obj = (1 - self.theta) * d @ z - self.theta * z_sub
+            obj = (1 - self.theta) * d @ z + self.theta * z_sub
         else:
-            obj = -z_sub
+            obj = z_sub
         model.setObjective(obj, grb.GRB.MINIMIZE)
 
         # Constraints
@@ -58,17 +59,15 @@ class Solver(object):
 
         return z_opt
 
-    def compute_matrix(self, x_0, data):
+    def compute_matrix(self, x0, data):
         N, dim = data.shape
 
         A = np.zeros((dim, N))
         d = np.zeros(N)
 
-        for i in range(N):
-            A[:, i] = (data[i] - x_0) / (np.linalg.norm(data[i] - x_0))
-            d[i] = np.linalg.norm(data[i] - x_0)
-
-        S = np.exp(-np.dot(A.T, A) ** 2 / (self.h ** 2))
+        A = (data - x0).T / np.linalg.norm(data - x0, axis=1)
+        d = np.linalg.norm(data - x0, axis=1)
+        S = np.dot(A.T, A)
 
         return A, S, d
 
@@ -90,8 +89,9 @@ class Solver(object):
         gamma = np.zeros(m_dim)
 
         for i in range(max_iter):
-            for j in range(m_dim):
-                gamma[j] = (self.theta * w[j] * np.dot(v[:, j], z))
+            gamma = -self.theta * (np.multiply(w, np.dot(v.T, z)))
+            # for j in range(m_dim):
+                # gamma[j] = -(self.theta * w[j] * np.dot(v[:, j], z))
 
             gamma_identity = (1 - self.theta) * d - 2 * np.dot(v, gamma)
             idx = (gamma_identity).argsort()[:k]
@@ -128,11 +128,12 @@ class Solver(object):
 
         return z_p
     
-    def solve(self, x0, k, period=20, best_response=True):
+    def solve(self, x0, k, period=20, best_response=True, return_time=False):
         A, S, d = self.compute_matrix(x0, self.data[self.labels == 1])
         w, v = self.find_eig(S)
 
         # Best response and dp
+        start_time = time.time()
         if best_response:
             z_p = self.best_response(w, v, d, k=2*k, period=period)
         else:
@@ -141,6 +142,8 @@ class Solver(object):
         z_prev = np.zeros(len(d))
         for i in range(period):
             z_prev = np.logical_or(z_prev, z_p[i, :])
+        
+        t = time.time() - start_time
 
         idx_l = np.where(z_prev == 1)[0]
 
@@ -152,6 +155,8 @@ class Solver(object):
         X_diverse = self.data[self.labels == 1][idx]
         X_other = self.data[self.labels == 1][np.where(z_prev == 0)[0]]
 
+        if return_time:
+            return t
         return idx, X_diverse, X_other
 
     def generate_recourse(self, x0, k, period=20, best_response=True, interpolate='linear'):
@@ -184,7 +189,6 @@ class Solver(object):
             A, S, d = self.compute_matrix(x0, recourse_set)
             recourse_set = recourse_set[self.quad(S, d, k, cost_diverse=False) == 1]
 
-
         return recourse_set, X_diverse, X_other
 
 
@@ -211,8 +215,8 @@ def generate_recourse(x0, model, random_state, params=dict()):
     X = data[labels == 1]
     k = params['k']
 
-    theta = params['frpd_params']['theta']
-    kernel_width = params['frpd_params']['kernel']
+    theta = gamma
+    kernel_width = p
     period = params['frpd_params']['period']
     best_response = params['frpd_params']['response']
 
@@ -220,4 +224,11 @@ def generate_recourse(x0, model, random_state, params=dict()):
     plans = quad.generate_recourse(x0, k, period, best_response)[0]
     report = dict(feasible=True)
 
-    return plans, report 
+    return plans, report
+
+
+def quad_recourse(x0, k, model, data, labels, theta, kernel_width):
+    quad =  Solver(model, data, labels, theta, kernel_width)
+    quad_time = quad.solve(x0, k, return_time=True)
+
+    return quad_time
