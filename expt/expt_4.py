@@ -183,7 +183,7 @@ def plot_4(ec, wdir, cname, dname, methods):
         for feasible in res['feasible']:
             if joint_feasible is None:
                 joint_feasible = feasible
-            joint_feasible = np.logical_and(joint_feasible, feasible)
+            # joint_feasible = np.logical_and(joint_feasible, feasible)
 
     for mname in methods:
         res = helpers.pload(
@@ -233,7 +233,7 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
             for feasible in res['feasible']:
                 if joint_feasible is None:
                     joint_feasible = feasible
-                joint_feasible = np.logical_and(joint_feasible, feasible)
+                # joint_feasible = np.logical_and(joint_feasible, feasible)
 
         for mname in methods:
             res = helpers.pload(
