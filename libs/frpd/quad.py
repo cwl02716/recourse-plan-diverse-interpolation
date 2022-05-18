@@ -215,8 +215,8 @@ def generate_recourse(x0, model, random_state, params=dict()):
     X = data[labels == 1]
     k = params['k']
 
-    theta = gamma
-    kernel_width = p
+    theta = params['frpd_params']['theta']
+    kernel_width = params['frpd_params']['kernel']
     period = params['frpd_params']['period']
     best_response = params['frpd_params']['response']
 
