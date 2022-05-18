@@ -75,6 +75,8 @@ def run(ec, wdir, dname, cname, mname,
                   transformer=transformer,)
 
     params['frpd_params'] = ec.frpd_params
+    if mname == 'frpd_dpp_ls':
+        params['frpd_params']['greedy'] = False
     params['dice_params'] = ec.dice_params
 
     jobs_args = []
@@ -138,8 +140,6 @@ def plot_3(ec, wdir, cname, datasets, methods):
         for mname in methods:
             l1_cost, valid, diversity, dpp, manifold_dist, likelihood, feasible = helpers.pload(
                 f'{cname}_{dname}_{mname}.pickle', wdir)
-            print(l1_cost, valid, diversity)
-            exit()
             avg = {}
             avg['cost'] = l1_cost 
             avg['valid'] = valid 
