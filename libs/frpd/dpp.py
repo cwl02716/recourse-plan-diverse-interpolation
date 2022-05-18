@@ -5,7 +5,7 @@ import dppy
 import math
 import matplotlib.pyplot as plt
 
-# from libs.frpd.quad import line_search
+from libs.frpd.quad import line_search
  
  
 def map_inference_dpp_greedy(kernel_matrix, max_length, epsilon=1E-10):
