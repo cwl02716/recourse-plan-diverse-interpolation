@@ -38,7 +38,8 @@ param_to_vary = {
     "dice": "diversity_weight",
     "dice_ga": "diversity_weight",
     "frpd_quad": "theta",
-    "frpd_dpp": "theta",
+    "frpd_dpp_gr": "theta",
+    "frpd_dpp_ls": "theta",
 }
 
 
