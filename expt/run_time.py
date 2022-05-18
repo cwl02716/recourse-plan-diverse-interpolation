@@ -306,7 +306,7 @@ def run_expt_run_time(ec, wdir, datasets, classifiers, methods,
     uds_X, uds_y = uds_X[:2], uds_y[:2]
 
     ptv = "N"
-    ptv_list = [100 * i for i in range(1, 50, 5)]
+    ptv_list = [100 * i for i in range(1, 10, 5)]
     
     time_greedy = []
     time_local  = []

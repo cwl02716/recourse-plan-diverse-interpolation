@@ -146,7 +146,8 @@ method_name_map = {
     'fr_rmpm_roar_delta': "FR-MPM-ROAR (2)",
     'face': "FACE",
     'frpd_quad': 'FRPD-QUAD',
-    'frpd_dpp': 'FRPD-DPP',
+    'frpd_dpp_gr': 'FRPD-DPP-GR',
+    'frpd_dpp_ls': 'FRPD-DPP-LS',
     'dice': 'DICE',
     'dice_ga': 'DICE_GA',
 }
@@ -187,7 +188,8 @@ method_map = {
     "fr_rmpm_roar": rmpm_roar,
     "face": face,
     "frpd_quad": quad,
-    "frpd_dpp": dpp,
+    "frpd_dpp_gr": dpp,
+    "frpd_dpp_ls": dpp,
     "dice": dice,
     "dice_ga": dice_ga,
 }

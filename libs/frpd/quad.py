@@ -135,9 +135,9 @@ class Solver(object):
         # Best response and dp
         start_time = time.time()
         if best_response:
-            z_p = self.best_response(w, v, d, k=2*k, period=period)
+            z_p = self.best_response(w, v, d, k=k, period=period)
         else:
-            z_p = self.dp(w, v, d, k=2*k, step_size=1, period=period)
+            z_p = self.dp(w, v, d, k=k, step_size=1, period=period)
         
         z_prev = np.zeros(len(d))
         for i in range(period):

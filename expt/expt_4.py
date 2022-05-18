@@ -106,6 +106,9 @@ def run(ec, wdir, dname, cname, mname,
                       transformer=transformer,)
 
         params['frpd_params'] = ec.frpd_params
+        if mname == 'frpd_dpp_ls':
+            params['frpd_params']['greedy'] = False
+
         params['dice_params'] = ec.dice_params
 
         if ptv == 'theta':

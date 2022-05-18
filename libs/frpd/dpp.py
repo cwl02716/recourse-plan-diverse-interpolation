@@ -257,7 +257,7 @@ def generate_recourse(x0, model, random_state, params=dict()):
     D = np.exp(-d ** 2 / kernel_width ** 2) * np.identity(d.shape[0])
     L = theta * S + (1 - theta) * D
 
-    idx = map_inference_dpp(L, k) if greedy else map_inference_dpp_sw(L, 1, k)
+    idx = map_inference_dpp(L, k) if greedy else map_inference_dpp_local_search_2(L, k)[0]
     X_diverse = X[idx, :]
 
     recourse_set = []
@@ -296,7 +296,7 @@ def dpp_recourse(x0, X, M, gamma=0.5, sigma=2.):
     L = gamma * S + (1 - gamma) * D
  
     selected_items = map_inference_dpp_sw(L, 1, M)
-    cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = map_inference_dpp_local_search(L, M, verbose=False)
+    cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = map_inference_dpp_local_search_2(L, M, verbose=False)
     print(cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time)
     # cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = map_inference_dpp_local_search_2(L, M, verbose=False)
 
