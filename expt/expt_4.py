@@ -204,7 +204,7 @@ def plot_4(ec, wdir, cname, dname, methods):
             data[mname]['dpp'].append(np.mean(res['dpp'][i]))
 
     plot(methods, 'cost', 'diversity', data)
-    plot(method, 'cost', 'dpp', data)
+    plot(methods, 'cost', 'dpp', data)
     plot(methods, 'cost', 'manifold_dist', data)
 
 
