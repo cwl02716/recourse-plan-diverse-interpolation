@@ -80,6 +80,7 @@ def run(ec, wdir, dname, cname, mname,
     res['cost'] = []
     res['diversity'] = []
     res['dpp'] = []
+    res['manifold_dist'] = []
     res['feasible'] = []
 
     for value in ptv_list:
@@ -125,17 +126,20 @@ def run(ec, wdir, dname, cname, mname,
         cost = []
         diversity = []
         dpp = []
+        manifold_dist = []
         feasible = []
 
         for ret in rets:
             cost.append(ret.l1_cost)
             diversity.append(ret.diversity)
             dpp.append(ret.dpp)
+            manifold_dist.append(ret.manifold_dist)
             feasible.append(ret.feasible)
 
         res['cost'].append(np.array(cost))
         res['diversity'].append(np.array(diversity))
         res['dpp'].append(np.array(dpp))
+        res['manifold_dist'].append(np.array(manifold_dist))
         res['feasible'].append(np.array(feasible))
 
     helpers.pdump(res,
@@ -148,6 +152,7 @@ def run(ec, wdir, dname, cname, mname,
 label_map = {
     'diversity': "Diversity",
     'dpp': "DPP",
+    'manifold_dist': "Manifold distance",
     'cost': 'Cost',
 }
 
@@ -189,15 +194,18 @@ def plot_4(ec, wdir, cname, dname, methods):
         data[mname]['ptv_list'] = res['ptv_list']
         data[mname]['cost'] = []
         data[mname]['diversity'] = []
+        data[mname]['manifold_dist'] = []
         data[mname]['dpp'] = []
 
         for i in range(len(res['ptv_list'])):
             data[mname]['cost'].append(np.mean(res['cost'][i]))
             data[mname]['diversity'].append(np.mean(res['diversity'][i]))
+            data[mname]['manifold_dist'].append(np.mean(res['manifold_dist'][i]))
             data[mname]['dpp'].append(np.mean(res['dpp'][i]))
 
     plot(methods, 'cost', 'diversity', data)
     plot(method, 'cost', 'dpp', data)
+    plot(methods, 'cost', 'manifold_dist', data)
 
 
 def plot_4_1(ec, wdir, cname, datasets, methods):

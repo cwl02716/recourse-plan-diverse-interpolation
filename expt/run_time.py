@@ -303,10 +303,10 @@ def run_expt_run_time(ec, wdir, datasets, classifiers, methods,
 
     y_pred = model.predict(X_test)
     uds_X, uds_y = X_test[y_pred == 0], y_test[y_pred == 0]
-    uds_X, uds_y = uds_X[:2], uds_y[:2]
+    uds_X, uds_y = uds_X[:100], uds_y[:100]
 
     ptv = "N"
-    ptv_list = [100 * i for i in range(1, 10, 5)]
+    ptv_list = [100 * i for i in range(1, 50, 5)]
     
     time_greedy = []
     time_local  = []
@@ -329,8 +329,8 @@ def run_expt_run_time(ec, wdir, datasets, classifiers, methods,
         X = transformer.transform(X_df).to_numpy()
 
         for i in range(len(uds_y)):
-            cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = dpp_recourse(uds_X[i, :], X[y == 1], 5, gamma=0.5, sigma=2.)
-            quad_time = quad_recourse(uds_X[i, :], 5, model, X, y, 0.5, 2.)
+            cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = dpp_recourse(uds_X[i, :], X[y == 1], 3, gamma=0.5, sigma=2.)
+            quad_time = quad_recourse(uds_X[i, :], 3, model, X, y, 0.5, 2.)
             _time_greedy.append(greedy_time)
             _time_local.append(ls_time)
             _time_quad.append(quad_time)
