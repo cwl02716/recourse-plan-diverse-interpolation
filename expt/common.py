@@ -163,7 +163,7 @@ dataset_name_map = {
     "adult": "Adult",
 }
 
-metric_order = {'cost': -1, 'valid': 1, 'diversity': 1, 'dpp': 1, 'manifold_dist': -1, 'likelihood': 1}
+metric_order = {'cost': -1, 'valid': 1, 'diversity': -1, 'dpp': 1, 'manifold_dist': -1, 'likelihood': 1}
 
 method_map = {
     "lime_ar": lime_ar,
