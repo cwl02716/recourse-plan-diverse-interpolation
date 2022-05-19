@@ -13,7 +13,7 @@ import dice_ml
 
 from utils import helpers
 from utils.data_transformer import DataTransformer
-from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp, compute_likelihood
+from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp, compute_likelihood, compute_pairwise_cosine
 
 from classifiers import mlp, random_forest
 
@@ -113,7 +113,8 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
 
     valid = compute_validity(model, plans)
     l1_cost = compute_proximity(x0, plans, p=2)
-    diversity = compute_diversity(plans, transformer.data_interface)
+    # diversity = compute_diversity(plans, transformer.data_interface)
+    diversity = compute_pairwise_cosine(x0, plans, params['k'])
     manifold_dist = compute_distance_manifold(plans, params['train_data'], params['k'])
     dpp = compute_dpp(plans)
     likelihood = compute_likelihood(plans, params['train_data'], params['k'])

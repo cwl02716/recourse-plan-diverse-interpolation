@@ -210,6 +210,18 @@ def plot_4(ec, wdir, cname, dname, methods):
 
 def plot_4_1(ec, wdir, cname, datasets, methods):
     def __plot(ax, data, dname, x_label, y_label):
+        # Matplotlib config
+        # SMALL_SIZE = 8
+        # MEDIUM_SIZE = 12
+        # BIGGER_SIZE = 24
+
+
+        # plt.rc('font', size=BIGGER_SIZE)          # controls default text sizes
+        # plt.rc('axes', labelsize=30)    # fontsize of the x and y labels
+        # plt.rc('xtick', labelsize=30)    # fontsize of the tick labels
+        # plt.rc('ytick', labelsize=30)    # fontsize of the tick labels
+        # plt.rc('legend', fontsize=BIGGER_SIZE)    # legend fontsize
+
         marker = reversed(['+', 'v', '^', 'o', (5, 0)])
         iter_marker = itertools.cycle(marker)
 
@@ -218,9 +230,10 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
                 ax.scatter(data[dname][mname][x_label], data[dname][mname][y_label],
                            marker=(5, 1), label=method_name_map[mname], alpha=0.7, color='black', zorder=10)
             else:
-                X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
+                # X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
+                X, y = data[dname][mname][x_label], data[dname][mname][y_label]
                 ax.plot(X, y, marker=next(iter_marker),
-                        label=method_name_map[mname], alpha=0.7)
+                        label=method_name_map[mname], alpha=0.7, linewidth=2, markersize=12)
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         ax.set_title(dataset_name_map[dname])
 
@@ -246,21 +259,23 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
             data[dname][mname]['cost'] = []
             data[dname][mname]['diversity'] = []
             data[dname][mname]['dpp'] = []
+            data[dname][mname]['manifold_dist'] = []
 
             for i in range(len(res['ptv_list'])):
                 data[dname][mname]['cost'].append(np.mean(res['cost'][i]))
                 data[dname][mname]['diversity'].append(np.mean(res['diversity'][i]))
                 data[dname][mname]['dpp'].append(np.mean(res['dpp'][i]))
+                data[dname][mname]['manifold_dist'].append(np.mean(res['manifold_dist'][i]))
 
     plt.style.use('seaborn-deep')
-    plt.rcParams.update({'font.size': 10.5})
+    plt.rcParams.update({'font.size': 24})
     num_ds = len(datasets)
-    figsize_map = {5: (30, 5.5), 4: (20, 5.5), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
-    fig, axs = plt.subplots(2, num_ds, figsize=figsize_map[num_ds])
+    figsize_map = {5: (30, 5.5), 4: (30, 20), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
+    fig, axs = plt.subplots(3, num_ds, figsize=figsize_map[num_ds])
     if num_ds == 1:
         axs = axs.reshape(-1, 1)
 
-    metrics = ['diversity', 'dpp']
+    metrics = ['diversity', 'dpp', 'manifold_dist']
 
     for i in range(num_ds):
         for j in range(len(metrics)):
