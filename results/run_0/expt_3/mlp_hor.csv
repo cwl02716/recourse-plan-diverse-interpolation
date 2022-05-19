@@ -1,2 +1,0 @@
-method,cost-ge,valid-ge,diversity-ge,dpp-ge,manifold_dist-ge,likelihood-ge
-FRPD-DPP,\textbf{0.18} $\pm$ 0.23,\textbf{1.00} $\pm$ 0.00,\textbf{0.28} $\pm$ 0.37,\textbf{0.29} $\pm$ 0.23,\textbf{0.08} $\pm$ 0.08,\textbf{-1175.00} $\pm$ 273.40
