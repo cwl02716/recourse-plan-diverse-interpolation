@@ -142,7 +142,7 @@ class Expt3(Config):
 
     kfold = 2
     num_future = 2
-    k = 2
+    k = 3
     cross_validate = False 
 
     perturb_std = 1.0
