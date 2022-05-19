@@ -249,7 +249,7 @@ def compute_likelihood(plans, train_data_1, k, gamma=100.):
 
 
 def compute_pairwise_cosine(x0, plans, k):
-    A = (plans - x0).T / np.linalg.norm(data - x0, axis=1)
+    A = (plans - x0).T / np.linalg.norm(plans - x0, axis=1)
     S = np.dot(A.T, A)
     
     diversity = 2 / (np.sum(S) - k)
