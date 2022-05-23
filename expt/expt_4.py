@@ -210,18 +210,6 @@ def plot_4(ec, wdir, cname, dname, methods):
 
 def plot_4_1(ec, wdir, cname, datasets, methods):
     def __plot(ax, data, dname, x_label, y_label):
-        # Matplotlib config
-        # SMALL_SIZE = 8
-        # MEDIUM_SIZE = 12
-        # BIGGER_SIZE = 24
-
-
-        # plt.rc('font', size=BIGGER_SIZE)          # controls default text sizes
-        # plt.rc('axes', labelsize=30)    # fontsize of the x and y labels
-        # plt.rc('xtick', labelsize=30)    # fontsize of the tick labels
-        # plt.rc('ytick', labelsize=30)    # fontsize of the tick labels
-        # plt.rc('legend', fontsize=BIGGER_SIZE)    # legend fontsize
-
         marker = reversed(['+', 'v', '^', 'o', (5, 0)])
         iter_marker = itertools.cycle(marker)
 
@@ -270,12 +258,11 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
     plt.style.use('seaborn-deep')
     plt.rcParams.update({'font.size': 24})
     num_ds = len(datasets)
+    metrics = ['diversity', 'dpp', 'manifold_dist']
     figsize_map = {5: (30, 5.5), 4: (30, 12), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
-    fig, axs = plt.subplots(2, num_ds, figsize=figsize_map[num_ds])
+    fig, axs = plt.subplots(len(metrics), num_ds, figsize=figsize_map[num_ds])
     if num_ds == 1:
         axs = axs.reshape(-1, 1)
-
-    metrics = ['dpp', 'manifold_dist']
 
     for i in range(num_ds):
         for j in range(len(metrics)):
