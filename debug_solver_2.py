@@ -1,76 +1,70 @@
-import os
-import pickle
 import numpy as np
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
-from libs.frpd.quad import Solver
+import dice_ml
+
+from libs.frpd import quad, dpp
+from libs.dice import dice
+
 from utils import helpers
-from utils.transformer import get_transformer
-from expt.common import synthetic_params
-from classifiers.mlp import Net0
+from utils.data_transformer import DataTransformer
+from utils.visualization import visualize_explanations
+
+from expt.common import synthetic_params, clf_map, load_models
 
 
-# Get data
-transformer = get_transformer('synthesis')
-df, _ = helpers.get_dataset('synthesis', params=synthetic_params)
+synthetic_params['num_samples'] = 50
+df, numerical = helpers.get_dataset("synthesis", params=synthetic_params)
+full_dice_data = dice_ml.Data(dataframe=df,
+                continuous_features=numerical,
+                outcome_name='label')
+transformer = DataTransformer(full_dice_data)
+
 y = df['label'].to_numpy()
-X = df.drop('label', axis=1)
-X = transformer.transform(X)
+X_df = df.drop('label', axis=1)
+X = transformer.transform(X_df).to_numpy()
 
-# Get model
-with open("results/run_0/checkpoints/mlp_synthesis_5.pickle", "rb") as f:
-    model = pickle.load(f)[0]
-y = model.predict(X)
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8,
+                                                    random_state=42, stratify=y)
 
-# Solver
-best_response = True
-# theta_l = [0.1 * i for i in range(11)]
-theta_l = [1]
-kernel_l = [0.1 * (i + 1) for i in range(0, 40)]
-for idx in range(len(theta_l)):
-    for j in range(len(kernel_l)):
-        s = Solver(model, X, y, theta=1, kernel_width=kernel_l[j])
-        recourse_set, X_diverse, X_other = s.generate_recourse(np.array([1.5, 2]), k=3)
-        # A, S, d = s.compute_matrix(np.array([1.5, 2]), X[y == 1])
-        # w, v = s.find_eig(S)
 
-        # Best response or dp
-        # if best_response:
-        #     z_p = s.best_response(w, v, d, k=5, period=20)
-        # else:
-        #     z_p = s.dp(w, v, d, k=5, step_size=1, period=20)
-    
-        # z_prev = np.zeros(len(d))
+d = X.shape[1]
+clf = clf_map["mlp"]
+model = load_models("synthesis", "mlp", "results/run_0/synthesis")
 
-        # for i in range(20):
-        #     z_prev = np.logical_or(z_prev, z_p[i, :])
-    
-        # idx_l = np.where(z_prev == 1)[0]
+y_pred = model.predict(X_test)
+uds_X, uds_y = X_test[y_pred == 0], y_test[y_pred == 0]
+uds_X, uds_y = uds_X[:100], uds_y[:100]
 
-        # data = X[y == 1][np.where(z_prev == 1)[0]]
-        # A, S, d = s.compute_matrix(X[0], data)
-        # z = s.quad(S, d, 3)
-        # idx = idx_l[np.where(z == 1)[0]]
+idx = X_train[:, 0] < 0.5 
+X_train = X_train[idx]
+y_train = model.predict(X_train)
 
-        # X_diverse = X[y == 1][idx]
-        # X_other = X[y == 1][np.where(z_prev == 0)[0]]
+# x0 = uds_X[0]
+x0 = np.array([0.5, -0.5])
+print(model.predict(x0))
+params_frpd = {"train_data": X_train, "labels": y_train,  "k": 2, "frpd_params": {"theta": 1.0, "kernel": 1.0, "period": 10, "response": True}}
+plans_frpd, _ = quad.generate_recourse(x0, model, random_state=42, params=params_frpd)
 
-        # Plot
-        fig, ax = plt.subplots()
-        # ax.scatter(X[0][0], X[0][1], s=100, marker='*', label = 'x0')
-        ax.scatter(1.5, 2, s=100, marker='*', label = 'x0')
-        ax.scatter(recourse_set[:, 0], recourse_set[:, 1], marker='o', c='#17becf', label = 'Recourse')
-        ax.scatter(X_diverse[:, 0], X_diverse[:, 1], marker='o', label = 'Diverse')
-        ax.scatter(X_other[:, 0], X_other[:, 1], marker='o', label = 'Other')
 
-        ax.set(xlabel='$x_{0}$', ylabel='$x_{1}$')
-        ax.legend(loc='upper right', frameon=False)
+params_dice = {"dataframe": df, "numerical": numerical, "k": 2, "dice_params": {"proximity_weight": 2.0, "diversity_weight": 0.5}}
+plans_dice, _ = dice.generate_recourse(x0, model, random_state=42, params=params_dice)
+# plans_dice[0] = np.array([-0.21, -0.26])
+# plans_frpd[0] = [0.9, -0.1]
+# plans_dice[1] = [1.02, 1.17]
+print(plans_frpd, plans_dice)
+visualize_explanations(model=model, X=X_train, y=y_train, x_test=x0, show=True, N=1000, xlim=(-0.05, 0.8), ylim=(-0.75, 1.5), plans_frpd=plans_frpd, plans_dice=plans_dice, save=True)
 
-        ax.set_xlim(-4, 8)
-        ax.set_ylim(-4, 8)
-        plt.tight_layout()
+fig, ax = plt.subplots()
+ax.scatter(X_train[:, 0], X_train[:, 1], marker='o', s=50, color='red', label="Data")
+ax.scatter(plans_frpd[:, 0], plans_frpd[:, 1], marker='^', s=50, color='green', label="FRPD-QUAD recourse")
+ax.scatter(plans_dice[:, 0], plans_dice[:, 1], marker='^', s=50, color='blue', label="DiCE recourse")
+ax.scatter(x0[0], x0[1], marker='*', s=50, color='black', label="Input")
 
-        if not os.path.exists('results/figures/'):
-            os.makedirs('results/figures/')
-        plt.savefig(f'results/figures/visualization_BR.jpg', dpi=500, transparent=True)
-        plt.show()
+ax.set_xlim(-0.25, 1.5)
+ax.set_ylim(-0.75, 1.25)
+ax.legend(loc="lower right")
+plt.savefig("plot_2D.pdf", dpi=400)
+
+plt.show()

@@ -230,8 +230,8 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
                 ax.scatter(data[dname][mname][x_label], data[dname][mname][y_label],
                            marker=(5, 1), label=method_name_map[mname], alpha=0.7, color='black', zorder=10)
             else:
-                # X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
-                X, y = data[dname][mname][x_label], data[dname][mname][y_label]
+                X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
+                # X, y = data[dname][mname][x_label], data[dname][mname][y_label]
                 ax.plot(X, y, marker=next(iter_marker),
                         label=method_name_map[mname], alpha=0.7, linewidth=2, markersize=12)
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
@@ -270,12 +270,12 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
     plt.style.use('seaborn-deep')
     plt.rcParams.update({'font.size': 24})
     num_ds = len(datasets)
-    figsize_map = {5: (30, 5.5), 4: (30, 20), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
-    fig, axs = plt.subplots(3, num_ds, figsize=figsize_map[num_ds])
+    figsize_map = {5: (30, 5.5), 4: (30, 12), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
+    fig, axs = plt.subplots(2, num_ds, figsize=figsize_map[num_ds])
     if num_ds == 1:
         axs = axs.reshape(-1, 1)
 
-    metrics = ['diversity', 'dpp', 'manifold_dist']
+    metrics = ['dpp', 'manifold_dist']
 
     for i in range(num_ds):
         for j in range(len(metrics)):

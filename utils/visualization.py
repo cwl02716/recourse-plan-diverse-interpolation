@@ -60,7 +60,7 @@ def confidence_ellipse(mean, cov, ax, n_std=3.0, facecolor='none', **kwargs):
 def visualize_explanations(model, X=None, y=None, x_test=None, lines=None,
                            mean_neg=None, cov_neg=None, mean_pos=None, cov_pos=None,
                            line_labels=None, xlim=None, ylim=None, N=1000, name=1,
-                           show=False, save=False):
+                           show=False, save=False, plans_frpd=None, plans_dice=None):
     if xlim is None:
         xmin, xmax = np.min(X[:, 0]), np.max(X[:, 0])
     else:
@@ -81,10 +81,10 @@ def visualize_explanations(model, X=None, y=None, x_test=None, lines=None,
                      cmap="Blues", alpha=0.3, levels=1)
 
     if X is not None and y is not None:
-        ax.scatter(X[y == 0, 0],
-                   X[y == 0, 1], s=8, alpha=0.5)
+        # ax.scatter(X[y == 0, 0],
+        #             X[y == 0, 1], s=8, alpha=0.5)
         ax.scatter(X[y == 1, 0],
-                   X[y == 1, 1], s=8, alpha=0.5)
+                   X[y == 1, 1], s=80, alpha=0.5, label="Data")
 
     colors = ['red', 'green', 'blueviolet', 'magenta', 'darkblue', 'olive']
     line_labels = line_labels or ['LIME', 'RMPM']
@@ -97,7 +97,7 @@ def visualize_explanations(model, X=None, y=None, x_test=None, lines=None,
             ax.plot(xdd, ydd, colors[i], lw=2, ls='--', label=line_labels[i], zorder=30)
             i += 1
 
-    plt.rcParams.update({'font.size': 17})
+    plt.rcParams.update({'font.size': 12})
     if mean_neg is not None:
         ax.scatter(mean_neg[0], mean_neg[1], color='olive',
                    marker='^', zorder=20, s=40, label='$\hat{\mu}_{-1}$')
@@ -107,7 +107,7 @@ def visualize_explanations(model, X=None, y=None, x_test=None, lines=None,
 
     if mean_pos is not None:
         ax.scatter(mean_pos[0], mean_pos[1], color='brown',
-                   marker='v', zorder=20, s=40, label='$\hat{\mu}_{+1}$')
+                   marker='v', zorder=20, s=100, label='$\hat{\mu}_{+1}$')
         if cov_pos is not None:
             confidence_ellipse(mean_pos, cov_pos, ax, edgecolor='brown',
                                zorder=20, label='$\hat{\Sigma}_{+1}$')
@@ -115,11 +115,17 @@ def visualize_explanations(model, X=None, y=None, x_test=None, lines=None,
     # ax.annotate('$-1$', (-0.7, 0.4))
     # ax.annotate('$+1$', (0.7, 0.4))
     if x_test is not None:
-        ax.scatter(x_test[0], x_test[1], s=40, marker='*',
-                   zorder=20, color='black')
-        ax.annotate('$x_0$', (x_test+ np.full_like(x_test, 0.1)))
+        ax.scatter(x_test[0], x_test[1], s=150, marker='*',
+                   zorder=20, color='black', label="Input")
+        ax.annotate('$x_0$', (x_test+ np.full_like(x_test, 0.02)))
 
+    if plans_frpd is not None:
+        ax.scatter(plans_frpd[:, 0], plans_frpd[:, 1], marker='^', s=100, color='green', label="FRPD-QUAD recourse")
 
+    if plans_dice is not None:
+        ax.scatter(plans_dice[:, 0], plans_dice[:, 1], marker='^', s=100, color='red', label="DiCE recourse")
+
+    ax.legend(loc="upper right")
     ax.set_ylabel(r'$x_2$')
     ax.set_xlabel(r'$x_1$')
     ax.set_xlim(xmin, xmax)
@@ -133,7 +139,7 @@ def visualize_explanations(model, X=None, y=None, x_test=None, lines=None,
 
     if save:
         os.makedirs("results/figures", exist_ok=True)
-        plt.savefig(f"results/figures/example_{name}.png", dpi=500, bbox_inches='tight')
+        plt.savefig(f"results/figures/example_{name}.pdf", dpi=500, bbox_inches='tight')
     if show:
         plt.show()
 
