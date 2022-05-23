@@ -108,6 +108,9 @@ def run(ec, wdir, dname, cname, mname,
                       transformer=transformer,)
 
         params['frpd_params'] = ec.frpd_params
+        if mname == 'frpd_quad_dp':
+            params['frpd_params']['response'] = False
+
         if mname == 'frpd_dpp_ls':
             params['frpd_params']['greedy'] = False
 
