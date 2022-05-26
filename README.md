@@ -26,5 +26,5 @@ python run_expt.py -e 3 --datasets synthesis german sba bank adult -clf mlp --me
 * Experiment: Run time comparison
 
 ```sh
-python run_expt.py -e time -uc
+python run_expt.py -e run_time -uc
 ```

@@ -70,5 +70,5 @@ if __name__ == '__main__':
                        plot_only=args.plot_only, seed=args.seed, logger=logger,
                        start_index=args.start_index, num_ins=args.num_ins)
         
-        if ept == 'time':
+        if ept == 'run_time':
             run_expt_run_time(None, None, None, None, None, logger=logger)
