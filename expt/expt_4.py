@@ -34,7 +34,6 @@ from expt.expt_config import Expt4
 Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
 
 param_to_vary = {
-    "wachter": "none",
     "dice": "diversity_weight",
     "dice_ga": "diversity_weight",
     "frpd_quad": "theta",
