@@ -262,7 +262,7 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
     plt.style.use('seaborn-deep')
     plt.rcParams.update({'font.size': 24})
     num_ds = len(datasets)
-    metrics = ['diversity', 'dpp', 'manifold_dist']
+    metrics = ['dpp', 'manifold_dist']
     figsize_map = {5: (30, 5.5), 4: (30, 12), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
     fig, axs = plt.subplots(len(metrics), num_ds, figsize=figsize_map[num_ds])
     if num_ds == 1:

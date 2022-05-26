@@ -17,15 +17,9 @@ from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute
 
 from classifiers import mlp, random_forest
 
-from libs.ar import lime_ar, svm_ar, clime_ar, limels_ar
-from libs.roar import lime_roar, clime_roar, limels_roar
-from libs.mace import mace
-from libs.wachter import wachter
-from libs.projection import lime_proj
 from libs.face import face
 from libs.frpd import quad, dpp
 from libs.dice import dice, dice_ga
-from rmpm import rmpm_ar, rmpm_proj, rmpm_roar
 
 
 # Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
@@ -108,8 +102,9 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     full_dice_data = dice_ml.Data(dataframe=df,
                               continuous_features=numerical,
                               outcome_name='label')
-    
     plans, report = method.generate_recourse(x0, model, random_state, params)
+    print(idx, transformer.inverse_transform(x0.reshape(1, -1)))
+    print(transformer.inverse_transform(plans.reshape(3, -1)))
 
     valid = compute_validity(model, plans)
     l1_cost = compute_proximity(x0, plans, p=2)
@@ -122,29 +117,6 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     return Results(valid, l1_cost, diversity, dpp, manifold_dist, likelihood, report['feasible'])
 
 method_name_map = {
-    "lime_ar": "LIME-AR",
-    "mpm_ar": "MPM-AR",
-    "clime_ar": "CLIME-AR",
-    "limels_ar": "LIMELS-AR",
-    "quad_rmpm_ar": "QUAD-MPM-AR",
-    "bw_rmpm_ar": "BW-MPM-AR",
-    "fr_rmpm_ar": "FR-MPM-AR",
-    "lime_roar": "LIME-ROAR",
-    "clime_roar": "CLIME-ROAR",
-    "limels_roar": "LIMELS-ROAR",
-    "mace": "MACE",
-    "wachter": "Wachter",
-    "lime_proj": "LIME-PROJ",
-    "mpm_proj": "MPM-RPOJ",
-    "fr_rmpm_proj": "FR-MPM-PROJ",
-    "quad_rmpm_proj": "QUAD-MPM-PROJ",
-    "bw_rmpm_proj": "BW-MPM-PROJ",
-    "mpm_roar": "MPM-ROAR",
-    "quad_rmpm_roar": "QUAD-MPM-ROAR",
-    "bw_rmpm_roar": "BW-MPM-ROAR",
-    'fr_rmpm_roar': "FR-MPM-ROAR",
-    'fr_rmpm_roar_rho': "FR-MPM-ROAR (1)",
-    'fr_rmpm_roar_delta': "FR-MPM-ROAR (2)",
     'face': "FACE",
     'frpd_quad': 'FRPD-QUAD',
     'frpd_quad_dp': 'FRPD-QUAD-DP',
@@ -167,27 +139,6 @@ dataset_name_map = {
 metric_order = {'cost': -1, 'valid': 1, 'diversity': -1, 'dpp': 1, 'manifold_dist': -1, 'likelihood': 1}
 
 method_map = {
-    "lime_ar": lime_ar,
-    "mpm_ar": rmpm_ar,
-    "clime_ar": clime_ar,
-    "limels_ar": limels_ar,
-    "quad_rmpm_ar": rmpm_ar,
-    "bw_rmpm_ar": rmpm_ar,
-    "fr_rmpm_ar": rmpm_ar,
-    "mace": mace,
-    "wachter": wachter,
-    "lime_proj": lime_proj,
-    "mpm_proj": rmpm_proj,
-    "quad_rmpm_proj": rmpm_proj,
-    "bw_rmpm_proj": rmpm_proj,
-    "fr_rmpm_proj": rmpm_proj,
-    "lime_roar": lime_roar,
-    "clime_roar": clime_roar,
-    "limels_roar": limels_roar,
-    "mpm_roar": rmpm_roar,
-    "quad_rmpm_roar": rmpm_roar,
-    "bw_rmpm_roar": rmpm_roar,
-    "fr_rmpm_roar": rmpm_roar,
     "face": face,
     "frpd_quad": quad,
     "frpd_quad_dp": quad,
@@ -196,8 +147,6 @@ method_map = {
     "dice": dice,
     "dice_ga": dice_ga,
 }
-
-
 
 
 clf_map = {

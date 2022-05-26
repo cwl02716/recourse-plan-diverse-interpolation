@@ -74,6 +74,7 @@ def run(ec, wdir, dname, cname, mname,
                   k=ec.k,
                   transformer=transformer,)
 
+    params['face_params'] = ec.face_params
     params['frpd_params'] = ec.frpd_params
     if mname == 'frpd_quad_dp':
         params['frpd_params']['response'] = False

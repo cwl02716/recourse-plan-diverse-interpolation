@@ -1,11 +1,11 @@
 import os
 import argparse
 from expt.expt_config import ExptConfig
-from expt.expt_1 import run_expt_1
-from expt.expt_2 import run_expt_2
+# from expt.expt_1 import run_expt_1
+# from expt.expt_2 import run_expt_2
 from expt.expt_3 import run_expt_3
 from expt.expt_4 import run_expt_4
-from expt.expt_5 import run_expt_5
+# from expt.expt_5 import run_expt_5
 from expt.run_time import run_expt_run_time
 from utils.helpers import make_logger
 import logging
@@ -60,14 +60,6 @@ if __name__ == '__main__':
         os.makedirs(ept_dir, exist_ok=True)
         logger = make_logger(f'expt_{ept}', ept_dir)
 
-        if ept == "1":
-            run_expt_1(ec, ept_dir, datasets=args.datasets, methods=args.methods,
-                       classifiers=args.classifiers, num_proc=args.num_proc,
-                       plot_only=args.plot_only, seed=args.seed, logger=logger)
-        if ept == "2":
-            run_expt_2(ec, ept_dir, datasets=args.datasets, methods=args.methods,
-                       classifiers=args.classifiers, num_proc=args.num_proc,
-                       plot_only=args.plot_only, seed=args.seed, logger=logger)
         if ept == "3":
             run_expt_3(ec, ept_dir, datasets=args.datasets, methods=args.methods, rerun=args.rerun,
                        classifiers=args.classifiers, num_proc=args.num_proc,
@@ -77,10 +69,6 @@ if __name__ == '__main__':
                        classifiers=args.classifiers, num_proc=args.num_proc,
                        plot_only=args.plot_only, seed=args.seed, logger=logger,
                        start_index=args.start_index, num_ins=args.num_ins)
-        if ept == '5':
-            run_expt_5(ec, ept_dir, datasets=args.datasets, methods=args.methods, rerun=args.rerun,
-                       classifiers=args.classifiers, num_proc=args.num_proc,
-                       plot_only=args.plot_only, seed=args.seed, logger=logger,
-                       start_index=args.start_index, num_ins=args.num_ins)
+        
         if ept == 'time':
             run_expt_run_time(None, None, None, None, None, logger=logger)

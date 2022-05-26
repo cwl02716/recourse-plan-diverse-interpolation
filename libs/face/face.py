@@ -1,7 +1,12 @@
+import copy
 import numpy as np
 
 from sklearn.utils import check_random_state
+# import Dijkstra's shortest path algorithm
+from scipy.sparse import csgraph, csr_matrix
 
+# import graph building methods
+from sklearn.neighbors import kneighbors_graph, radius_neighbors_graph
 # from utils.visualization import visualize_explanations
 
 def choose_random_subset(data, frac, index):
@@ -19,21 +24,20 @@ def choose_random_subset(data, frac, index):
     -------
     pd.DataFrame
     """
-    number_samples = np.int(np.rint(frac * data.values.shape[0]))
+    number_samples = np.int(np.rint(frac * data.shape[0]))
     list_to_choose = (
         np.arange(0, index).tolist()
-        + np.arange(index + 1, data.values.shape[0]).tolist()
+        + np.arange(index + 1, data.shape[0]).tolist()
     )
     chosen_indeces = np.random.choice(
         list_to_choose,
-        replace=False,
+        replace=True,
         size=number_samples,
     )
     chosen_indeces = [
         index
     ] + chosen_indeces.tolist()  # make sure sample under consideration included
-    data = data.iloc[chosen_indeces]
-    data = data.sort_index()
+    data = data[chosen_indeces]
     
     return data
 
@@ -84,15 +88,15 @@ def build_graph(data, immutable_constraint_matrix1, immutable_constraint_matrix2
     CSR matrix
     """
     if is_knn:
-        graph = kneighbors_graph(data.values, n_neighbors=n, n_jobs=-1)
+        graph = kneighbors_graph(data, n_neighbors=n, n_jobs=-1)
     else:
-        graph = radius_neighbors_graph(data.values, radius=n, n_jobs=-1)
+        graph = radius_neighbors_graph(data, radius=n, n_jobs=-1)
     adjacency_matrix = graph.toarray()
-    adjacency_matrix = np.multiply(
-        adjacency_matrix,
-        immutable_constraint_matrix1,
-        immutable_constraint_matrix2,
-    )  # element wise multiplication
+    # adjacency_matrix = np.multiply(
+    #     adjacency_matrix,
+    #     immutable_constraint_matrix1,
+    #     immutable_constraint_matrix2,
+    # )  # element wise multiplication
     graph = csr_matrix(adjacency_matrix)
     return graph
 
@@ -110,9 +114,10 @@ def shortest_path(graph, index):
     -------
     np.ndarray, float
     """
-    distances = csgraph.dijkstra(
-        csgraph=graph, directed=False, indices=index, return_predecessors=False
+    distances, predecessors = csgraph.dijkstra(
+        csgraph=graph, directed=False, indices=index, return_predecessors=True
     )
+    print(predecessors)
     distances[index] = np.inf  # avoid min. distance to be x^F itself
     min_distance = distances.min()
     return distances, min_distance
@@ -138,7 +143,7 @@ def find_counterfactuals(candidates, data, immutable_constraint_matrix1, immutab
     list
     """
     candidate_counterfactuals_star = copy.deepcopy(candidates)
-# STEP 1 -- BUILD NETWORK GRAPH
+    # STEP 1 -- BUILD NETWORK GRAPH
     graph = build_graph(
         data, immutable_constraint_matrix1, immutable_constraint_matrix2, is_knn, n
     )
@@ -162,7 +167,7 @@ def find_counterfactuals(candidates, data, immutable_constraint_matrix1, immutab
         np.array(y_positive_indeces), np.array(min_distance_indeces)
     )
     for i in range(indeces_counterfactuals.shape[0]):
-        candidate_counterfactuals_star.append(data.values[indeces_counterfactuals[i]])
+        candidate_counterfactuals_star.append(data[indeces_counterfactuals[i]])
 
     return candidate_counterfactuals_star
 
@@ -186,13 +191,13 @@ def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, 
     # ADD CONSTRAINTS by immutable inputs into adjacency matrix
     # if element in adjacency matrix 0, then it cannot be reached
     # this ensures that paths only take same sex / same race / ... etc. routes
-    for i in range(len(keys_immutable)):
-        immutable_constraint_matrix1, immutable_constraint_matrix2 = build_constraints(
-            data, i, keys_immutable
-        )
+    # for i in range(len(keys_immutable)):
+    #     immutable_constraint_matrix1, immutable_constraint_matrix2 = build_constraints(
+    #         data, i, keys_immutable
+    #     )
 
     # POSITIVE PREDICTIONS
-    y_predicted = model.predict_proba(data.values)
+    y_predicted = model.predict_proba(data)
     y_predicted = np.argmax(y_predicted, axis=1)
     y_positive_indeces = np.where(y_predicted == 1)
 
@@ -218,6 +223,8 @@ def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, 
     # obtain candidate targets (CT); two conditions need to be met:
     # (1) CT needs to be predicted positively & (2) CT needs to have certain "density"
     # for knn I interpret 'certain density' as sufficient number of neighbours
+    immutable_constraint_matrix1, immutable_constraint_matrix2 = None, None
+
     candidate_counterfactuals = []
     for n in neighbors_list:
         neighbor_candidates = find_counterfactuals(
@@ -244,11 +251,11 @@ def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, 
         return candidate_counterfactual_star
 
     if p_norm == 1:
-        c_dist = np.abs((data.values[index] - candidate_counterfactual_star)).sum(
+        c_dist = np.abs((data[index] - candidate_counterfactual_star)).sum(
             axis=1
         )
     elif p_norm == 2:
-        c_dist = np.square((data.values[index] - candidate_counterfactuals)).sum(axis=1)
+        c_dist = np.square((data[index] - candidate_counterfactuals)).sum(axis=1)
     else:
         raise ValueError("Distance not defined yet. Choose p_norm to be 1 or 2")
 
@@ -260,16 +267,17 @@ def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, 
 
 def generate_recourse(x0, model, random_state, params=dict()):
     # Parameters
-    mode = params.face_params['mode']
-    fraction = params.face_params['fraction']
+    mode = params['face_params']['mode']
+    fraction = params['face_params']['fraction']
     train_data = params['train_data']
 
     # Remove test instance from training instance and concat
     idx = np.all(x0 == train_data, axis=1)
     train_data = train_data[idx == False]
-    train_data = np.concatenate([x0, train_data])
+    train_data = np.concatenate([x0.reshape(1, -1), train_data])
 
     # Graph search
-    cf = graph_search(train_data, 0, _immutables, model, mode, fraction)
+    cf = graph_search(train_data, 0, None, model, p_norm=1, mode=mode, frac=fraction)
+    print(x0, cf)
 
     return cf

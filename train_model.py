@@ -80,6 +80,7 @@ def train(clf_name, data_name, wdir, lr, num_epoch, seed=123, verbose=False, num
     report['auc'] = auc
     name = f"{clf_name}_{data_name}.pickle"
     helpers.pdump(model, name, wdir)
+    print(report)
     print("Trained classifier: {} on current dataset: {}, and saved to {}".format(
         clf_name, data_name, os.path.join(wdir, name)))
 

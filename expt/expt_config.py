@@ -123,7 +123,7 @@ class Expt3(Config):
 
     face_params = {
         "mode": "knn",
-        "fraction": 0.2,
+        "fraction": 1.0,
     }
 
     frpd_params = {
