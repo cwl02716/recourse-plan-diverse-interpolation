@@ -1,9 +1,12 @@
 import time
+import math
 import numpy as np
 from scipy.linalg import eigh
 from sklearn.neighbors import NearestNeighbors
 
 import gurobipy as grb
+
+from libs.frpd.flow import opt_flow
 
 
 class Solver(object):
@@ -18,6 +21,38 @@ class Solver(object):
 
         self.data_hat = self.data[self.labels == 1]
         self.N, self.dim = self.data_hat.shape
+
+    def quad_greedy(self, kernel_matrix, max_length, epsilon=1E-10):
+        item_size = kernel_matrix.shape[0]
+        cis = np.zeros((max_length, item_size))
+        di2s = np.copy(np.diag(kernel_matrix))
+        selected_items = list()
+        selected_item = np.argmin(di2s)
+        selected_items.append(selected_item)
+        while len(selected_items) < max_length:
+            di2s = np.array([np.inf for j in range(kernel_matrix.shape[0])])
+            for i in range(kernel_matrix.shape[0]):
+                selected_ = np.array(selected_items + [i])
+                di2s[i] = np.sum(kernel_matrix[selected_.reshape(-1, 1), selected_.reshape(1, -1)])
+            # k = len(selected_items) - 1
+            # ci_optimal = cis[:k, selected_item]
+            # di_optimal = np.sqrt(di2s[selected_item])
+            # elements = kernel_matrix[selected_item, :]
+            # eis = (elements - np.dot(ci_optimal, cis[:k, :])) / di_optimal
+            # cis[k, :] = eis
+            # di2s -= np.square(eis)
+            # di2s[selected_item] = np.inf
+            # selected_item = np.argmin(di2s)
+            # if di2s[selected_item] < epsilon:
+                # break
+            selected_item = np.argmin(di2s)
+            selected_items.append(selected_item)
+
+        S = np.sort(np.array(selected_items))
+        # print(S)
+        # print(np.linalg.det(kernel_matrix[S.reshape(-1, 1), S.reshape(1, -1)]), kernel_matrix[S.reshape(-1, 1), S.reshape(1, -1)])
+        # det_L = np.linalg.det(kernel_matrix + np.identity(item_size))
+        return S, np.sum(kernel_matrix[S.reshape(-1, 1), S.reshape(1, -1)])
 
     def quad(self, S, d, k, cost_diverse=True):
         """ Solve quadratic program with gurobi
@@ -128,8 +163,10 @@ class Solver(object):
 
         return z_p
     
-    def solve(self, x0, k, period=20, best_response=True, return_time=False):
+    def solve(self, x0, k, period=20, best_response=True, return_time=False, return_obj=False):
         A, S, d = self.compute_matrix(x0, self.data[self.labels == 1])
+        L = self.theta * S + (1 - self.theta) * (d * np.identity(d.shape[0]))
+        S_ = np.copy(S)
         w, v = self.find_eig(S)
 
         # Best response and dp
@@ -155,39 +192,28 @@ class Solver(object):
         X_diverse = self.data[self.labels == 1][idx]
         X_other = self.data[self.labels == 1][np.where(z_prev == 0)[0]]
 
-        if return_time:
+        if return_time: 
             return t
+        if return_obj:
+            sum_obj = np.sum(L[idx.reshape(-1, 1), idx.reshape(1, -1)])
+            return sum_obj
+
         return idx, X_diverse, X_other
 
-    def generate_recourse(self, x0, k, period=20, best_response=True, interpolate='linear'):
+    def generate_recourse(self, x0, k, period=20, best_response=True, interpolate='linear', n_neighbors=5, tau=0.5):
         idx, X_diverse, X_other = self.solve(x0, k, period, best_response)
 
-        recourse_set = []
+        if interpolate == 'linear':
+            recourse_set = []
 
-        if interpolate == 'linear_best':
-            knn = NearestNeighbors(n_neighbors=k)
-            knn.fit(self.data[self.labels == 0])
-        
-        for i in range(X_diverse.shape[0]):
-            recourse_set_i = []
-            if interpolate == 'linear_best':
-                idx = knn.kneighbors(X_diverse[i].reshape(1, -1), return_distance=False)
-            
-                for j in range(k):
-                    best_x_b = line_search(self.model, x0, X_diverse[i], self.data[self.labels == 0][idx[0][j]], p=2)
-                    recourse_set_i.append(best_x_b)
-            
-                recourse_set += recourse_set_i
-
-            elif interpolate == 'linear':
+            for i in range(X_diverse.shape[0]):
                 best_x_b = line_search(self.model, x0, X_diverse[i], x0, p=2)  
                 recourse_set.append(best_x_b)
  
-        recourse_set = np.array(recourse_set)
+        elif interpolate == 'flow':
+            recourse_set = opt_flow(x0, self.data, self.model, k, n_neighbors, tau, X_diverse)[0]
 
-        if interpolate == 'linear_best':
-            A, S, d = self.compute_matrix(x0, recourse_set)
-            recourse_set = recourse_set[self.quad(S, d, k, cost_diverse=False) == 1]
+        recourse_set = np.array(recourse_set)
 
         return recourse_set, X_diverse, X_other
 
@@ -219,9 +245,12 @@ def generate_recourse(x0, model, random_state, params=dict()):
     kernel_width = params['frpd_params']['kernel']
     period = params['frpd_params']['period']
     best_response = params['frpd_params']['response']
+    interpolation = params['frpd_params']['interpolate']
+    n_neighbors = params['frpd_params']['n_neighbors']
+    tau = params['frpd_params']['tau']
 
     quad =  Solver(model, data, labels, theta, kernel_width)
-    plans = quad.generate_recourse(x0, k, period, best_response)[0]
+    plans = quad.generate_recourse(x0, k, period, best_response, interpolation, n_neighbors, tau)[0]
     report = dict(feasible=True)
 
     return plans, report
@@ -229,6 +258,27 @@ def generate_recourse(x0, model, random_state, params=dict()):
 
 def quad_recourse(x0, k, model, data, labels, theta, kernel_width):
     quad =  Solver(model, data, labels, theta, kernel_width)
-    quad_time = quad.solve(x0, k, return_time=True)
+    sum_obj = quad.solve(x0, k, return_obj=True)
 
-    return quad_time
+    return sum_obj
+
+
+def quad_recourse_gurobi(x0, k, model, data, labels, theta, kernel_width):
+    quad = Solver(model, data, labels, theta, kernel_width)
+    A, S, d = quad.compute_matrix(x0, quad.data[quad.labels == 1])
+
+    t = time.time()
+    z = quad.quad(S, d, k)
+
+    return time.time() - t
+
+def quad_recourse_greedy(x0, k, model, data, labels, theta, kernel_width):  
+    quad = Solver(model, data, labels, theta, kernel_width)
+    A, S, d = quad.compute_matrix(x0, quad.data[quad.labels == 1])
+    D = d * np.identity(d.shape[0])
+    L = theta * S + (1 - theta) * D
+
+    t = time.time()
+    z, prob = quad.quad_greedy(L, k)
+
+    return prob

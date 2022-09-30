@@ -19,7 +19,9 @@ class Expt3(Config):
         "kernel": 1.0,
         "period": 20,
         "response": True,
-        "interpolate": "linear",
+        "interpolate": "flow",
+        "n_neighbors": 10,
+        "tau": 0.5,
         "greedy": True,
     }
 
@@ -31,7 +33,7 @@ class Expt3(Config):
     k = 3
 
     num_samples = 1000
-    max_ins = 100
+    max_ins = 2
     max_distance = 1.0
 
 
@@ -46,7 +48,9 @@ class Expt4(Config):
         "kernel": 1.0,
         "period": 20,
         "response": True,
-        "interpolate": "linear",
+        "interpolate": "flow",
+        "n_neighbors": 10,
+        "tau": 0.5,
         "greedy": True,
     }
 
@@ -72,7 +76,7 @@ class Expt4(Config):
 
     k = 3
     num_samples = 1000
-    max_ins = 20
+    max_ins = 2
 
 
 class ExptConfig(Config):

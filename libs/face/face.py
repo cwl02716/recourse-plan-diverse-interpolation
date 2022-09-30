@@ -117,7 +117,6 @@ def shortest_path(graph, index):
     distances, predecessors = csgraph.dijkstra(
         csgraph=graph, directed=False, indices=index, return_predecessors=True
     )
-    print(predecessors)
     distances[index] = np.inf  # avoid min. distance to be x^F itself
     min_distance = distances.min()
     return distances, min_distance
@@ -172,7 +171,7 @@ def find_counterfactuals(candidates, data, immutable_constraint_matrix1, immutab
     return candidate_counterfactuals_star
 
 
-def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, mode="knn", frac=0.4, radius=0.25):
+def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, mode="knn", frac=0.4, radius=0.25, K=3):
     """
     :param data: df
     :param n_neighbors: int > 0; number of neighbors when constructing knn graph
@@ -240,6 +239,7 @@ def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, 
         candidate_counterfactuals += neighbor_candidates
 
     candidate_counterfactual_star = np.array(candidate_counterfactuals)
+    candidate_counterfactual_star = np.unique(candidate_counterfactual_star, axis=0)
 
     # STEP 4 -- COMPUTE DISTANCES between x^F and candidate x^CF; else return NaN
     if candidate_counterfactual_star.size == 0:
@@ -259,7 +259,8 @@ def graph_search(data, index, keys_immutables, model, n_neighbors=50, p_norm=2, 
     else:
         raise ValueError("Distance not defined yet. Choose p_norm to be 1 or 2")
 
-    min_index = np.argmin(c_dist)
+    # min_index = np.argmin(c_dist)
+    min_index = np.argsort(c_dist)[:K]
     candidate_counterfactual_star = candidate_counterfactual_star[min_index]
 
     return candidate_counterfactual_star
@@ -277,7 +278,7 @@ def generate_recourse(x0, model, random_state, params=dict()):
     train_data = np.concatenate([x0.reshape(1, -1), train_data])
 
     # Graph search
-    cf = graph_search(train_data, 0, None, model, p_norm=1, mode=mode, frac=fraction)
-    print(x0, cf)
+    cf = graph_search(train_data, 0, None, model, p_norm=1, mode=mode, frac=fraction, K=params['k'])
+    report = dict(feasible=True)
 
-    return cf
+    return cf, report

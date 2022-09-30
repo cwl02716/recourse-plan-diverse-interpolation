@@ -1,7 +1,7 @@
 from scipy.linalg import sqrtm, eigh
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, KernelDensity
 
 import numpy as np
 import scipy as sp
@@ -246,6 +246,12 @@ def compute_likelihood(plans, train_data_1, k, gamma=100.):
         density[i] = s
 
     return np.mean(density)
+
+
+def compute_kde(plans, train_data_1, gamma=100.):
+    kde = KernelDensity(kernel='gaussian').fit(train_data_1)
+    log_density = kde.score_samples(plans)
+    return np.mean(log_density)
 
 
 def compute_pairwise_cosine(x0, plans, k):

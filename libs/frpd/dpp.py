@@ -6,6 +6,7 @@ import math
 import matplotlib.pyplot as plt
 
 from libs.frpd.quad import line_search
+from libs.frpd.flow import opt_flow
  
  
 def map_inference_dpp_greedy(kernel_matrix, max_length, epsilon=1E-10):
@@ -39,6 +40,8 @@ def map_inference_dpp_greedy(kernel_matrix, max_length, epsilon=1E-10):
         selected_items.append(selected_item)
  
     S = np.sort(np.array(selected_items))
+    # print(S)
+    # print(np.linalg.det(kernel_matrix[S.reshape(-1, 1), S.reshape(1, -1)]), kernel_matrix[S.reshape(-1, 1), S.reshape(1, -1)])
     # det_L = np.linalg.det(kernel_matrix + np.identity(item_size))
     return S, np.linalg.det(kernel_matrix[S.reshape(-1, 1), S.reshape(1, -1)]) 
  
@@ -152,6 +155,7 @@ def map_inference_dpp_local_search_2(L, k, verbose=False):
 
     cur_sol = greedy_sol.copy()
     cur_prob = greedy_prob
+    obj_greedy = greedy_prob
 
     N = L.shape[0]
     all_idx = np.array(range(N))
@@ -177,6 +181,7 @@ def map_inference_dpp_local_search_2(L, k, verbose=False):
             if prob > best_removal_prob:
                 best_removal_idx = i
                 best_removal_prob = prob
+        obj_loc = best_removal_prob
 
         brid = best_removal_idx
         br = cur_sol[brid]
@@ -216,7 +221,8 @@ def map_inference_dpp_local_search_2(L, k, verbose=False):
         it += 1
 
     ls_time = time.time() - start_time
-    return cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time
+    return cur_sol, obj_loc, ls_time, greedy_sol, greedy_prob, greedy_time
+    # return cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time
 
 
 def map_inference_dpp_brute_force(L, k):
@@ -248,6 +254,8 @@ def generate_recourse(x0, model, random_state, params=dict()):
     kernel_width = params['frpd_params']['kernel']    
     interpolate = params['frpd_params']['interpolate']
     greedy = params['frpd_params']['greedy']
+    n_neighbors = params['frpd_params']['n_neighbors']
+    tau = params['frpd_params']['tau']
 
     report = dict(feasible=True)
 
@@ -261,12 +269,15 @@ def generate_recourse(x0, model, random_state, params=dict()):
     idx = res[3] if greedy else res[0]
     X_diverse = X[idx, :]
 
-    recourse_set = []
-    for i in range(k):
-        if interpolate == 'linear':
+    if interpolate == 'linear':
+        recourse_set = []
+        for i in range(k):
             best_x_b = line_search(model, x0, X_diverse[i], x0, p=2)
             recourse_set.append(best_x_b)
     
+    elif interpolate == 'flow':
+        recourse_set = opt_flow(x0, data, model, k, n_neighbors, tau, X_diverse)[0]
+
     plans = np.array(recourse_set)
 
     return plans, report
@@ -296,9 +307,9 @@ def dpp_recourse(x0, X, M, gamma=0.5, sigma=2.):
     D = np.exp(- d**2/sigma**2) * np.identity(d.shape[0])
     L = gamma * S + (1 - gamma) * D
  
-    selected_items = map_inference_dpp_sw(L, 1, M)
+    # selected_items = map_inference_dpp_sw(L, 1, M)
     cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = map_inference_dpp_local_search_2(L, M, verbose=False)
-    print(cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time)
+    # print(cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time)
     # cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time = map_inference_dpp_local_search_2(L, M, verbose=False)
 
     return cur_sol, cur_prob, ls_time, greedy_sol, greedy_prob, greedy_time

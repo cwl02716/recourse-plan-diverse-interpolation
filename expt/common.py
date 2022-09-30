@@ -13,13 +13,14 @@ import dice_ml
 
 from utils import helpers
 from utils.data_transformer import DataTransformer
-from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp, compute_likelihood, compute_pairwise_cosine
+from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp, compute_likelihood, compute_pairwise_cosine, compute_kde
 
 from classifiers import mlp, random_forest
 
 from libs.face import face
 from libs.frpd import quad, dpp
 from libs.dice import dice, dice_ga
+from libs.gs import gs
 
 
 # Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
@@ -103,8 +104,8 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
                               continuous_features=numerical,
                               outcome_name='label')
     plans, report = method.generate_recourse(x0, model, random_state, params)
-    print(idx, transformer.inverse_transform(x0.reshape(1, -1)))
-    print(transformer.inverse_transform(plans.reshape(3, -1)))
+    # print(idx, transformer.inverse_transform(x0.reshape(1, -1)))
+    # print(transformer.inverse_transform(plans.reshape(3, -1)))
 
     valid = compute_validity(model, plans)
     l1_cost = compute_proximity(x0, plans, p=2)
@@ -112,7 +113,8 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
     diversity = compute_pairwise_cosine(x0, plans, params['k'])
     manifold_dist = compute_distance_manifold(plans, params['train_data'], params['k'])
     dpp = compute_dpp(plans)
-    likelihood = compute_likelihood(plans, params['train_data'], params['k'])
+    # likelihood = compute_likelihood(plans, params['train_data'], params['k'])
+    likelihood = compute_kde(plans, params['train_data'][params['labels'] == 1])
 
     return Results(valid, l1_cost, diversity, dpp, manifold_dist, likelihood, report['feasible'])
 
@@ -122,8 +124,9 @@ method_name_map = {
     'frpd_quad_dp': 'FRPD-QUAD-DP',
     'frpd_dpp_gr': 'FRPD-DPP-GR',
     'frpd_dpp_ls': 'FRPD-DPP-LS',
-    'dice': 'DICE',
+    'dice': 'DiCE',
     'dice_ga': 'DICE_GA',
+    'gs': "GS",
 }
 
 
@@ -146,6 +149,7 @@ method_map = {
     "frpd_dpp_ls": dpp,
     "dice": dice,
     "dice_ga": dice_ga,
+    "gs": gs,
 }
 
 

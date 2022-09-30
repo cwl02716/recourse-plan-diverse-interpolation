@@ -171,7 +171,6 @@ def plot_3(ec, wdir, cname, datasets, methods):
             res[f'feasible'].append("{:.2f}".format(temp['feasible'][mname]))
 
     df = pd.DataFrame(res)
-    print(df)
     filepath = os.path.join(wdir, f"{cname}{'_ar' if '_ar' in methods[0] else ''}.csv")
     df.to_csv(filepath, index=False, float_format='%.2f')
 
