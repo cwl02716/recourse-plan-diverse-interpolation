@@ -15,11 +15,11 @@ class Expt3(Config):
     }
 
     frpd_params = {
-        "theta": 0.99,
+        "theta": 0.9,
         "kernel": 1.0,
         "period": 20,
         "response": True,
-        "interpolate": "flow",
+        "interpolate": "linear",
         "n_neighbors": 10,
         "tau": 0.5,
         "greedy": True,
@@ -33,7 +33,7 @@ class Expt3(Config):
     k = 3
 
     num_samples = 1000
-    max_ins = 2
+    max_ins = 200
     max_distance = 1.0
 
 

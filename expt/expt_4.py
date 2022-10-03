@@ -48,8 +48,7 @@ def run(ec, wdir, dname, cname, mname,
                 # dname, cname, mname)
     print("Running dataset: %s, classifier: %s, method: %s..." %
                 (dname, cname, mname))
-
-    df, numerical = helpers.get_dataset(dname, params=synthetic_params)
+    df, numerical = helpers.get_dataset(dname, params=synthetic_params) if dname == "german" else helpers.get_full_dataset(dname, params=synthetic_params)
     full_dice_data = dice_ml.Data(dataframe=df,
                      continuous_features=numerical,
                      outcome_name='label')

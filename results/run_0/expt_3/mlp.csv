@@ -1,0 +1,2 @@
+dataset,method,cost,valid,diversity,dpp,manifold_dist,likelihood,feasible
+German,GS,\textbf{0.19} $\pm$ 0.21,\textbf{1.00} $\pm$ 0.00,\textbf{1.90} $\pm$ 0.52,\textbf{0.04} $\pm$ 0.05,\textbf{0.13} $\pm$ 0.13,\textbf{-7.05} $\pm$ 0.21,1.00

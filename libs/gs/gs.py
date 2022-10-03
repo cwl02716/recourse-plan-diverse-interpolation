@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 from numpy import linalg as LA
 
-from carla import log
-
 
 def hyper_sphere_coordindates(n_search_samples, instance, high, low, p_norm=2):
 
@@ -45,9 +43,9 @@ def growing_spheres_search(
     binary_cols,
     feature_order,
     model,
-    n_search_samples=100000,
+    n_search_samples=1000,
     p_norm=2,
-    step=0.001,
+    step=0.01,
     max_iter=1000,
     K=3,
 ):
@@ -158,8 +156,8 @@ def growing_spheres_search(
         # no candidate found & push search range outside
         low = high
         high = low + step
-
-    return candidate_counterfactual_star
+    
+    return candidate_counterfactual_star, counterfactuals_found
 
 
 def generate_recourse(x0, model, random_state, params=dict()):
@@ -179,16 +177,23 @@ def generate_recourse(x0, model, random_state, params=dict()):
 
     df_x0 = pd.Series(x0, index=feature_input_order)
 
-    cf = growing_spheres_search(
-        df_x0,
-        mutables,
-        immutables,
-        continuous,
-        categorical,
-        feature_input_order,
-        model,
-        k,
-    )
+    cf_found = False
+    step_init = 0.0001
+    while not cf_found:
+        cf, found = growing_spheres_search(
+            df_x0,
+            mutables,
+            immutables,
+            continuous,
+            categorical,
+            feature_input_order,
+            model,
+            k,
+            step=step_init,
+        )
+        step_init *= 10
+        if found:
+            cf_found = True
     
     report = dict(feasible=True)
     

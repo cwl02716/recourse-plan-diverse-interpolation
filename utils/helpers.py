@@ -104,7 +104,7 @@ def gen_synthetic_data(num_samples=1000, mean_0=None, cov_0=None, mean_1=None, c
         cov_0 = np.array([[0.5, 0], [0, 0.5]])
         mean_1 = np.array([2, 2])
         cov_1 = np.array([[0.5, 0], [0, 0.5]])
-
+    
     num_class0 = random_state.binomial(n=num_samples, p=0.5)
     x_class0 = random_state.multivariate_normal(mean_0, cov_0, num_class0)
     x_class1 = random_state.multivariate_normal(

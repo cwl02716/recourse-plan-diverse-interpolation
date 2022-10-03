@@ -34,11 +34,11 @@ mlp:
     accuracy: !!python/object/apply:numpy.core.multiarray.scalar
     - *id001
     - !!binary |
-      XI/C9Shc5z8=
+      uB6F61G45j8=
     auc: !!python/object/apply:numpy.core.multiarray.scalar
     - *id001
     - !!binary |
-      Q859dgGx5j8=
+      1EEd1EEd5D8=
   sba:
     accuracy: !!python/object/apply:numpy.core.multiarray.scalar
     - *id001

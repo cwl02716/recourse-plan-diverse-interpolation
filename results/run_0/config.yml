@@ -16,16 +16,16 @@ ec:
       mode: knn
     frpd_params:
       greedy: true
-      interpolate: flow
+      interpolate: linear
       kernel: 1.0
       n_neighbors: 10
       period: 20
       response: true
       tau: 0.5
-      theta: 0.99
+      theta: 0.9
     k: 3
     max_distance: 1.0
-    max_ins: 2
+    max_ins: 200
     num_samples: 1000
   e4:
     __dictpath__: ec.e4
