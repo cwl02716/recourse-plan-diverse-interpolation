@@ -77,6 +77,22 @@ selected_points = train_data[labels==1][mask, :]
 nbrs = NearestNeighbors(n_neighbors=4).fit(train_data_)
 distances, indices = nbrs.kneighbors(train_data_)
 graph = nbrs.kneighbors_graph(train_data_)
+print(graph, indices)
+count_labs = {}
+for i in range(indices.shape[0]):
+    count_labs[i] = 0
+    for j in range(1, indices.shape[1]):
+        if labels_[i] == 1 and labels_[indices[i][j]] == 1:
+            count_labs[i] += 1
+
+selected = []
+for i in range(indices.shape[0]):
+    if count_labs[i] != 3:
+        selected.append(i)
+print(count_labs, selected)
+print(train_data_[selected])
+print(labels_[selected])
+exit()
 
 weighted_graph = np.zeros(graph.shape)
 links = grb.tuplelist()
@@ -99,18 +115,18 @@ nodes[0].accumulation = 3   # Set constraint for source node
 for i in range(len(destination)):
     nodes[destination[i]].accumulation = -1
 
-# for i in range(graph.shape[0]):
-#     for j in range(1, indices.shape[1]):
-#         if [train_data_[i][0], train_data_[indices[i][j]][0], train_data_[i][1], train_data_[indices[i][j]][1]] not in total_edges:
-#             total_edges.append([train_data_[i][0], train_data_[indices[i][j]][0], train_data_[i][1], train_data_[indices[i][j]][1]])
-        # if (i, indices[i][j]) not in links:
-        #     links.append((i, indices[i][j]))
-        #     links.append((indices[i][j], i))
-        #     dist = tau * distances[i][j] if (labels_[i] == 0 or labels_[j] == 0) else (1 - tau) * distances[i][j]
-            # cost[i, indices[i][j]] = dist
-            # cost[indices[i][j], i] = dist
-        # weighted_graph[i][indices[i][j]] = distances[i][j]
-        # weighted_graph[indices[i][j]][i] = distances[i][j]
+for i in range(graph.shape[0]):
+    for j in range(1, indices.shape[1]):
+        if [train_data_[i][0], train_data_[indices[i][j]][0], train_data_[i][1], train_data_[indices[i][j]][1]] not in total_edges:
+            total_edges.append([train_data_[i][0], train_data_[indices[i][j]][0], train_data_[i][1], train_data_[indices[i][j]][1]])
+        if (i, indices[i][j]) not in links:
+            links.append((i, indices[i][j]))
+            links.append((indices[i][j], i))
+            dist = tau * distances[i][j] if (labels_[i] == 0 or labels_[j] == 0) else (1 - tau) * distances[i][j]
+            cost[i, indices[i][j]] = dist
+            cost[indices[i][j], i] = dist
+        weighted_graph[i][indices[i][j]] = distances[i][j]
+        weighted_graph[indices[i][j]][i] = distances[i][j]
 edges = []
 for i in range(graph.shape[0]):
     for j in range(1, indices.shape[1]):
@@ -169,8 +185,8 @@ print(result)
             # res_sum += weighted_graph[i][j]
             # res.append([train_data_[i][0], train_data_[j][0], train_data_[i][1], train_data_[j][1]])
 
-# for i in range(len(total_edges)):
-#     plt.plot([total_edges[i][0], total_edges[i][1]], [total_edges[i][2], total_edges[i][3]], color=(0, 0.1, 0, 0.1))  
+for i in range(len(total_edges)):
+    plt.plot([total_edges[i][0], total_edges[i][1]], [total_edges[i][2], total_edges[i][3]], color=(0, 0.1, 0, 0.1))  
 
 for i in range(len(res)):
     plt.plot([res[i][0], res[i][1]], [res[i][2], res[i][3]], color='b', linewidth=2.0)
