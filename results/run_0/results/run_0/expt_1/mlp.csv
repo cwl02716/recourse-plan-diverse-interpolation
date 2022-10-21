@@ -1,0 +1,5 @@
+dataset,method,cost,valid,diversity,dpp,manifold_dist,likelihood,feasible
+German,FACE,\textbf{0.22} $\pm$ 0.17,\textbf{1.00} $\pm$ 0.00,2.22 $\pm$ 0.78,0.03 $\pm$ 0.04,\textbf{0.00} $\pm$ 0.00,\textbf{-6.97} $\pm$ 0.20,1.00
+,FRPD-QUAD,0.55 $\pm$ 0.24,\textbf{1.00} $\pm$ 0.00,\textbf{-0.13} $\pm$ 1.14,0.20 $\pm$ 0.08,\textbf{0.00} $\pm$ 0.00,-7.05 $\pm$ 0.19,1.00
+,FRPD-DPP-GR,0.41 $\pm$ 0.21,\textbf{1.00} $\pm$ 0.00,0.66 $\pm$ 0.78,0.22 $\pm$ 0.07,\textbf{0.00} $\pm$ 0.00,-7.02 $\pm$ 0.20,1.00
+,FRPD-DPP-LS,0.41 $\pm$ 0.21,\textbf{1.00} $\pm$ 0.00,0.60 $\pm$ 0.77,\textbf{0.22} $\pm$ 0.08,\textbf{0.00} $\pm$ 0.00,-7.02 $\pm$ 0.20,1.00

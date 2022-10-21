@@ -1,0 +1,17 @@
+dataset,method,cost,valid,diversity,dpp
+German,FACE,\textbf{0.24} $\pm$ 0.17,\textbf{1.00} $\pm$ 0.00,2.18 $\pm$ 0.77,0.04 $\pm$ 0.04
+,FRPD-QUAD,0.55 $\pm$ 0.24,\textbf{1.00} $\pm$ 0.00,\textbf{-0.13} $\pm$ 0.24,0.21 $\pm$ 0.07
+,FRPD-DPP-GR,0.42 $\pm$ 0.20,\textbf{1.00} $\pm$ 0.00,0.20 $\pm$ 0.23,0.21 $\pm$ 0.05
+,FRPD-DPP-LS,0.42 $\pm$ 0.20,\textbf{1.00} $\pm$ 0.00,0.22 $\pm$ 0.23,\textbf{0.23} $\pm$ 0.07
+SBA,FACE,\textbf{0.25} $\pm$ 0.20,\textbf{1.00} $\pm$ 0.00,2.08 $\pm$ 0.78,0.02 $\pm$ 0.03
+,FRPD-QUAD,0.55 $\pm$ 0.25,\textbf{1.00} $\pm$ 0.00,\textbf{-0.04} $\pm$ 0.41,0.17 $\pm$ 0.09
+,FRPD-DPP-GR,0.52 $\pm$ 0.25,\textbf{1.00} $\pm$ 0.00,0.41 $\pm$ 0.25,\textbf{0.21} $\pm$ 0.03
+,FRPD-DPP-LS,0.52 $\pm$ 0.25,\textbf{1.00} $\pm$ 0.00,0.41 $\pm$ 0.25,\textbf{0.21} $\pm$ 0.03
+Bank,FACE,\textbf{1.29} $\pm$ 0.29,\textbf{1.00} $\pm$ 0.00,1.42 $\pm$ 0.86,0.31 $\pm$ 0.27
+,FRPD-QUAD,1.55 $\pm$ 0.44,\textbf{1.00} $\pm$ 0.00,\textbf{0.06} $\pm$ 0.12,0.69 $\pm$ 0.16
+,FRPD-DPP-GR,1.52 $\pm$ 0.42,\textbf{1.00} $\pm$ 0.00,0.16 $\pm$ 0.26,\textbf{0.74} $\pm$ 0.04
+,FRPD-DPP-LS,1.52 $\pm$ 0.42,\textbf{1.00} $\pm$ 0.00,0.16 $\pm$ 0.26,\textbf{0.74} $\pm$ 0.04
+Adult,FACE,\textbf{1.33} $\pm$ 0.36,\textbf{1.00} $\pm$ 0.00,2.66 $\pm$ 0.36,0.22 $\pm$ 0.27
+,FRPD-QUAD,1.99 $\pm$ 0.59,\textbf{1.00} $\pm$ 0.00,0.52 $\pm$ 0.17,\textbf{0.78} $\pm$ 0.06
+,FRPD-DPP-GR,2.00 $\pm$ 0.52,\textbf{1.00} $\pm$ 0.00,\textbf{0.45} $\pm$ 0.23,0.75 $\pm$ 0.17
+,FRPD-DPP-LS,2.00 $\pm$ 0.52,\textbf{1.00} $\pm$ 0.00,\textbf{0.45} $\pm$ 0.23,0.75 $\pm$ 0.17

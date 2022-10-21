@@ -1,10 +1,14 @@
+import numpy as np
+import scipy as sp
 from scipy.linalg import sqrtm, eigh
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import dijkstra, shortest_path
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 from sklearn.neighbors import NearestNeighbors, KernelDensity
+from Levenshtein import distance as lev
 
-import numpy as np
-import scipy as sp
+import networkx as nx
 
 
 def gelbrich_dist(mean_0, cov_0, mean_1, cov_1):
@@ -141,15 +145,20 @@ def is_dominated(a, b):
     return dominated
 
 
-def find_pareto(x, y):
+def find_pareto(x, y, incline=True):
     a = list(zip(x, y))
     a = sorted(a, key=lambda x: (x[0], -x[1]))
-    best = -1
+    best = -1 if incline else 100
     pareto = []
     for e in a:
-        if e[1] > best:
-            pareto.append(e)
-            best = e[1]
+        if incline:
+            if e[1] > best:
+                pareto.append(e)
+                best = e[1]
+        else:
+            if e[1] < best:
+                pareto.append(e)
+                best = e[1]
 
     return [e[0] for e in pareto], [e[1] for e in pareto]
 
@@ -159,12 +168,45 @@ def compute_validity(model, plans):
      return 1 if np.all(out == 1) else 0
 
 
+def shortest_path(graph, index):
+    """
+    Uses dijkstras shortest path
+    Parameters
+    ----------
+    graph: CSR matrix
+    index: int
+    Returns
+    -------
+    np.ndarray, float
+    """
+    distances = dijkstra(
+        csgraph=graph, directed=False, indices=index, return_predecessors=False
+    )
+    distances[index] = np.inf  # avoid min. distance to be x^F itself
+    min_distance = distances.min()
+    return distances, min_distance
+
+
 def compute_proximity(test_ins, plans, p=2):
     num_recourse, d = plans.shape
     ret = 0
     for i in range(num_recourse):
         ret += lp_dist(plans[i], test_ins, p)
     return ret / num_recourse
+
+
+def compute_proximity_graph(adj, idx):
+    graph = csr_matrix(adj)
+    dist_matrix, predecessors = shortest_path(csgraph=graph, directed=False, indices=0, return_predecessors=True)
+    # print(dist_matrix, idx, predecessors)
+    return dist_matrix[idx]
+
+
+def compute_proximity_graph_(adj, idx):
+    G = nx.from_numpy_array(adj)
+    for i in idx:
+        print(nx.shortest_path_length(G, 0, i))
+    return nx.shortest_path(G, 0, i)
 
 
 def compute_diversity(cfs, dice_data, weights='inverse_mad', intercept_feature=True):
@@ -261,3 +303,51 @@ def compute_pairwise_cosine(x0, plans, k):
     diversity = (np.sum(S) - k) / 2
 
     return diversity
+
+
+### Diversity of paths
+def compute_diversity_path(d, paths, weighted_matrix=None):
+    K = len(paths)
+    diverse = 0
+    for i in range(len(paths) - 1):
+        for j in range(i + 1, len(paths)):
+            diverse += d(paths[i], paths[j], weighted_matrix)
+
+    return 2 * diverse / ((K - 1) * K)
+
+
+def hamming_distance(p1, p2, weighted_matrix=None):
+    p1, p2 = set(p1), set(p2)
+    return len(p1.union(p2)) - len(p1.intersection(p2))
+
+
+def levenshtein_distance(p1, p2, weighted_matrix=None):
+    return lev(p1, p2)
+
+
+def jaccard(p1, p2, weighted_matrix):
+    """Compute Jaccard coefficient between 2 paths
+
+    Args:
+        p1: set of nodes of path 1
+        p2: set of nodes of path 2
+
+    Returns:
+        res: value of Jaccard coefficient
+    """
+    # Convert from list of nodes to edges
+    edges1 = {(p1[i], p1[i + 1]) for i in range(len(p1) - 1)}
+    edges2 = {(p2[i], p2[i + 1]) for i in range(len(p2) - 1)}
+
+    # Jaccard
+    union = edges1.union(edges2)
+    intersection = edges1.intersection(edges2)
+
+    s1, s2 = 0, 0
+    for edge in intersection:
+        s1 += weighted_matrix[edge]
+
+    for edge in union:
+        s2 += weighted_matrix[edge]
+
+    return s1 / s2

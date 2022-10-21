@@ -132,3 +132,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+build_graph.py
+test_flow.py
+test.py
+*.swp
+flow.png
+results/run_0/

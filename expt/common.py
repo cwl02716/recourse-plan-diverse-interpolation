@@ -13,7 +13,7 @@ import dice_ml
 
 from utils import helpers
 from utils.data_transformer import DataTransformer
-from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp, compute_likelihood, compute_pairwise_cosine, compute_kde
+from utils.funcs import compute_max_distance, lp_dist, compute_validity, compute_proximity, compute_diversity, compute_distance_manifold, compute_dpp, compute_likelihood, compute_pairwise_cosine, compute_kde, compute_proximity_graph, compute_proximity_graph_, compute_diversity_path, hamming_distance, levenshtein_distance, jaccard
 
 from classifiers import mlp, random_forest
 
@@ -25,6 +25,7 @@ from libs.gs import gs
 
 # Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
 Results = namedtuple("Results", ["valid", "l1_cost", "diversity", "dpp", "manifold_dist", "likelihood", "feasible"])
+Results_graph = namedtuple("Results_graph", ["valid", "l1_cost", "diversity", "dpp", "manifold_dist", "hamming",  "lev", "jac", "feasible"])
 
 
 def to_numpy_array(lst):
@@ -118,6 +119,39 @@ def _run_single_instance_plans(idx, method, x0, model, seed, logger, params=dict
 
     return Results(valid, l1_cost, diversity, dpp, manifold_dist, likelihood, report['feasible'])
 
+
+def _run_single_instance_plans_graph(idx, method, x0, graph, model, seed, logger, params=dict()):
+    # logger.info("Generating recourse for instance : %d", idx)
+    torch.manual_seed(seed+2)
+    np.random.seed(seed+1)
+    random_state = check_random_state(seed)
+
+    df = params['dataframe']
+    numerical = params['numerical']
+    k = params['k']
+    transformer = params['transformer']
+
+    full_dice_data = dice_ml.Data(dataframe=df,
+                              continuous_features=numerical,
+                              outcome_name='label')
+    params["graph"] = graph
+    # print(graph["data"][0], x0)
+    plans, dist, paths, report = method.generate_recourse(x0, model, random_state, params)
+
+    valid = compute_validity(model, plans)
+    # l1_cost = compute_proximity(x0, plans, p=2)
+    l1_cost = np.mean(dist)
+    diversity = compute_pairwise_cosine(x0, plans, params['k'])
+    manifold_dist = compute_distance_manifold(plans, params['train_data'], params['k'])
+    dpp = compute_dpp(plans)
+    # likelihood = compute_kde(plans, params['train_data'][params['labels'] == 1])
+    hamming = compute_diversity_path(hamming_distance, paths)
+    lev = compute_diversity_path(levenshtein_distance, paths)
+    jac = compute_diversity_path(jaccard, paths, weighted_matrix=graph['weighted_adj'])
+
+    return Results_graph(valid, l1_cost, diversity, dpp, manifold_dist, hamming, lev, jac, report['feasible'])
+
+
 method_name_map = {
     'face': "FACE",
     'frpd_quad': 'FRPD-QUAD',
@@ -140,6 +174,8 @@ dataset_name_map = {
 }
 
 metric_order = {'cost': -1, 'valid': 1, 'diversity': -1, 'dpp': 1, 'manifold_dist': -1, 'likelihood': 1}
+
+metric_order_graph = {'cost': -1, 'valid': 1, 'diversity': -1, 'dpp': 1, 'hamming': 1, 'lev': 1, 'jac': -1}
 
 method_map = {
     "face": face,

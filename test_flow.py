@@ -77,7 +77,6 @@ selected_points = train_data[labels==1][mask, :]
 nbrs = NearestNeighbors(n_neighbors=4).fit(train_data_)
 distances, indices = nbrs.kneighbors(train_data_)
 graph = nbrs.kneighbors_graph(train_data_)
-print(graph, indices)
 count_labs = {}
 for i in range(indices.shape[0]):
     count_labs[i] = 0
@@ -89,10 +88,6 @@ selected = []
 for i in range(indices.shape[0]):
     if count_labs[i] != 3:
         selected.append(i)
-print(count_labs, selected)
-print(train_data_[selected])
-print(labels_[selected])
-exit()
 
 weighted_graph = np.zeros(graph.shape)
 links = grb.tuplelist()
@@ -109,15 +104,19 @@ destination = []
 for i in range(selected_points.shape[0]):              
     idx_l = np.where(train_data_ == selected_points[i])
     destination.append(idx_l[0][0])                    
-print(destination)
 
 nodes[0].accumulation = 3   # Set constraint for source node
 for i in range(len(destination)):
     nodes[destination[i]].accumulation = -1
 
+checked, checked_idx = {}, {}
+idx = 0
 for i in range(graph.shape[0]):
     for j in range(1, indices.shape[1]):
         if [train_data_[i][0], train_data_[indices[i][j]][0], train_data_[i][1], train_data_[indices[i][j]][1]] not in total_edges:
+            if labels_[i] == 1 and labels_[indices[i][j]] == 1:
+                continue
+            checked[i] = True
             total_edges.append([train_data_[i][0], train_data_[indices[i][j]][0], train_data_[i][1], train_data_[indices[i][j]][1]])
         if (i, indices[i][j]) not in links:
             links.append((i, indices[i][j]))
@@ -127,6 +126,12 @@ for i in range(graph.shape[0]):
             cost[indices[i][j], i] = dist
         weighted_graph[i][indices[i][j]] = distances[i][j]
         weighted_graph[indices[i][j]][i] = distances[i][j]
+idx = 0
+for i in checked:
+    checked_idx[i] = idx
+    idx += 1
+print(checked, checked_idx)
+print(train_data_[list(checked.keys())].shape)
 edges = []
 for i in range(graph.shape[0]):
     for j in range(1, indices.shape[1]):
@@ -142,19 +147,19 @@ for o in nodes + edges:
 expression = edges[0].cost * edges[0].flow     
 for i in range(1, len(edges)):                 
     expression += edges[i].cost * edges[i].flow
-p = Problem(Minimize(expression), constraints) 
-result = p.solve()                             
+# p = Problem(Minimize(expression), constraints) 
+# result = p.solve()                             
 
-res = []
-for variable in p.variables():
+# res = []
+# for variable in p.variables():
     # print(variable.name(), variable.value)
     # if variable.name() == "Source" or variable.name() == "Sink":        
-    if variable.value > 0.1:                                              
-        print("Variable %s: value %s" % (variable.name(), variable.value))
-        i, j = int(variable.name().split('_')[0]), int(variable.name().split('_')[1])
-        res.append([train_data_[i][0], train_data_[j][0], train_data_[i][1], train_data_[j][1]])                                                                    
+#     if variable.value > 0.1:                                              
+#         print("Variable %s: value %s" % (variable.name(), variable.value))
+#         i, j = int(variable.name().split('_')[0]), int(variable.name().split('_')[1])
+#         res.append([train_data_[i][0], train_data_[j][0], train_data_[i][1], train_data_[j][1]])                                                                    
 
-print(result)                                                             
+# print(result)                                                             
 
 
 # Network flow LP
@@ -188,8 +193,8 @@ print(result)
 for i in range(len(total_edges)):
     plt.plot([total_edges[i][0], total_edges[i][1]], [total_edges[i][2], total_edges[i][3]], color=(0, 0.1, 0, 0.1))  
 
-for i in range(len(res)):
-    plt.plot([res[i][0], res[i][1]], [res[i][2], res[i][3]], color='b', linewidth=2.0)
+# for i in range(len(res)):
+#     plt.plot([res[i][0], res[i][1]], [res[i][2], res[i][3]], color='b', linewidth=2.0)
 
 
 # Plot 2D data

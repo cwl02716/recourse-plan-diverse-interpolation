@@ -29,6 +29,23 @@ from expt.common import dataset_name_map
 from expt.common import _run_single_instance, _run_single_instance_plans, to_numpy_array
 from expt.common import load_models, enrich_training_data
 from expt.expt_config import Expt4
+import seaborn as sns
+
+
+# Seaborn style
+sns.set_theme(style="white")
+
+font = {'family': 'serif',
+        'weight': 'bold',
+        'serif': ['Palatino']}
+plt.rc('font', **font)
+plt.rc('text', usetex=True)
+plt.rc('font', size=50)          # controls default text sizes
+plt.rc('axes', titlesize=50)     # fontsize of the axes title
+plt.rc('axes', labelsize=50)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=50)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=50)    # fontsize of the tick labels
+plt.rc('legend', fontsize=50)    # legend fontsize
 
 
 Results = namedtuple("Results", ["l1_cost", "cur_vald", "fut_vald", "feasible"])
@@ -57,6 +74,8 @@ def run(ec, wdir, dname, cname, mname,
     y = df['label'].to_numpy()
     X_df = df.drop('label', axis=1)
     X = transformer.transform(X_df).to_numpy()
+    if dname == "adult":
+            X, y = X[:int(0.1*len(X))], y[:int(0.1*len(y))]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8,
                                                         random_state=42, stratify=y)
@@ -141,6 +160,7 @@ def run(ec, wdir, dname, cname, mname,
         res['cost'].append(np.array(cost))
         res['diversity'].append(np.array(diversity))
         res['dpp'].append(np.array(dpp))
+        print(np.mean(np.array(cost)), np.mean(np.array(diversity)), np.mean(np.array(dpp)))
         res['manifold_dist'].append(np.array(manifold_dist))
         res['feasible'].append(np.array(feasible))
 
@@ -152,7 +172,7 @@ def run(ec, wdir, dname, cname, mname,
 
 
 label_map = {
-    'diversity': "Diversity",
+    'diversity': "Anti-Diversity",
     'dpp': "DPP",
     'manifold_dist': "Manifold distance",
     'cost': 'Cost',
@@ -166,7 +186,8 @@ def plot_4(ec, wdir, cname, dname, methods):
         iter_marker = itertools.cycle(marker)
 
         for mname in methods:
-            X, y = find_pareto(data[mname][x_label], data[mname][y_label])
+            incline = True if y_label != "diversity" else False
+            X, y = find_pareto(data[mname][x_label], data[mname][y_label], incline)
             ax.plot(X, y, marker=next(iter_marker),
                     label=method_name_map[mname], alpha=0.8)
 
@@ -174,7 +195,7 @@ def plot_4(ec, wdir, cname, dname, methods):
         ax.set_xlabel(label_map[x_label])
         # ax.set_yscale('log')
         ax.legend(prop={'size': 14})
-        filepath = os.path.join(wdir, f"{cname}_{dname}_{x_label}_{y_label}.png")
+        filepath = os.path.join(wdir, f"{cname}_{dname}_{x_label}_{y_label}.pdf")
         plt.savefig(filepath, dpi=400, bbox_inches='tight')
 
     data = defaultdict(dict)
@@ -220,12 +241,16 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
                 ax.scatter(data[dname][mname][x_label], data[dname][mname][y_label],
                            marker=(5, 1), label=method_name_map[mname], alpha=0.7, color='black', zorder=10)
             else:
-                X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label])
+                # if y_label != "diversity":
+                incline = True if y_label != "diversity" else False
+                X, y = find_pareto(data[dname][mname][x_label], data[dname][mname][y_label], incline)
+                # else:
                 # X, y = data[dname][mname][x_label], data[dname][mname][y_label]
                 ax.plot(X, y, marker=next(iter_marker),
-                        label=method_name_map[mname], alpha=0.7, linewidth=2, markersize=12)
+                        label=method_name_map[mname], alpha=1.0, linewidth=3, markersize=12)
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-        ax.set_title(dataset_name_map[dname])
+        # ax.set_yscale('log')
+        # ax.set_title(dataset_name_map[dname])
 
     data = defaultdict(dict)
     for dname in datasets:
@@ -240,9 +265,8 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
 
         for mname in methods:
             res = helpers.pload(
-                f'{cname}_{dname}_{mname}.pickle', wdir)
+                f'{cname}_{dname}_{mname}.pickle', wdir)  
 
-            # print(res)
             data[dname][mname] = {}
             data[dname][mname]['ptv_name'] = res['ptv_name']
             data[dname][mname]['ptv_list'] = res['ptv_list']
@@ -258,9 +282,17 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
                 data[dname][mname]['manifold_dist'].append(np.mean(res['manifold_dist'][i]))
 
     plt.style.use('seaborn-deep')
-    plt.rcParams.update({'font.size': 24})
+    plt.rcParams.update({'font.size': 30})
+    plt.rc('font', **font)
+    plt.rc('font', size=30)          # controls default text sizes
+    plt.rc('axes', titlesize=30)     # fontsize of the axes title
+    plt.rc('axes', labelsize=30)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=24)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=24)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=30)    # legend fontsize
+
     num_ds = len(datasets)
-    metrics = ['dpp', 'manifold_dist']
+    metrics = ['diversity', 'dpp'] # , 'manifold_dist']
     figsize_map = {5: (30, 5.5), 4: (30, 12), 3: (20, 5.5), 2: (10, 5.5), 1: (6, 5)}
     fig, axs = plt.subplots(len(metrics), num_ds, figsize=figsize_map[num_ds])
     if num_ds == 1:
@@ -273,6 +305,8 @@ def plot_4_1(ec, wdir, cname, datasets, methods):
                 axs[j, i].set_ylabel(label_map[metrics[j]])
             if j == len(metrics) - 1:
                 axs[j, i].set_xlabel(label_map['cost'])
+            if j == 0:
+                axs[j, i].set_title(dataset_name_map[datasets[i]])
 
     marker = reversed(['+', 'v', '^', 'o', (5, 0)])
     iter_marker = itertools.cycle(marker)
